@@ -1,0 +1,14 @@
+# Ignore everything in root except .gitignore, “scripts”, and “data”
+/*
+!*.gitignore
+!README.md
+!scripts/
+!data/
+
+# Ignore subdirectories in “scripts”
+scripts/*
+!scripts/trained_models.R
+
+# Ignore subdirectories in “data”
+data/*
+!data/lowflow_sc_ga_al_gagesII_2015.csv
