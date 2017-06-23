@@ -1,13 +1,19 @@
 
+# Description:
+# This script allows a user to recreate the model results using the optimal hyparameters.
+# The optimal hyperparameters are calculated in the "training_models.R" script. This script 
+# requires several R packages to be installed prior to the analysis.
+
+# Install and load packages
 library(pacman)
 p_load(dplyr,PUBAD,reshape2,randomForest,kknn,gbm,kernlab,Cubist,glmnet)
 
 source("fit_metrics.R")
 
-setwd("~/Documents/Ungaged basins/R_ungaged/EPA7Q10/epa-lowflow-FY16/final_scripts")
+setwd("~/Documents/Ungaged basins/epa_7q10_ml")
 
 ## Load csv file
-data.full <- read.csv("data/epa_lowflow_final_input.csv",header=T,na.strings = "-999") %>%
+data.full <- read.csv("data/lowflow_sc_ga_al_gagesII_2015.csv",header=T,na.strings = "-999") %>%
   setNames(tolower(names(.))) # make column names lower case
 
 ## Transform and scale response
