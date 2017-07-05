@@ -20,7 +20,7 @@ This readme file is intended to serve as a navigation guide for the model archiv
 
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[width=6in]{~/Documents/Ungaged basins/epa_7q10_ml/scripts/scripts_overview/epa_7q10_ml_scripts.png}
+\includegraphics[width=6in]{~/Documents/Ungaged basins/epa_7q10_ml/figures/epa_7q10_ml_scripts.png}
 \end{center}
 \end{figure}
 
@@ -243,3 +243,5 @@ cubist_params <- bayes_optim_caret(model_data,'cubist',cubist_bounds,iter=30)
 ```
 
 ### Description of monte_carlo()
+
+The Monte-Carlo analysis attempts to answer the following questions:  How does the predictive accuracy of a model compare relative to the other models as the amount of training data is increased? And similarly, would prediction accuracy be substantially improved with an increased number of gaged basins (i.e., are the models continuing to improve as we add more training data and is there evidence that installing more stream gages would be beneficial)? The Monte Carlo Analysis presented here can only answer the aforementioned questions relative to this particular dataset and these particular models.

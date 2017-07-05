@@ -1,13 +1,15 @@
-# Ignore everything in root except .gitignore, “scripts”, and “data”
+# Ignore everything in root except .gitignore, “scripts”, “data”, and “figures”
 /*
 !*.gitignore
 !README.md
 !scripts/
 !data/
+!figures/
 
 # Ignore subdirectories in “scripts”
-scripts/*
-!scripts/trained_models.R
+scripts/final_scripts
+scripts/misc_scripts
+.Rapp.history
 
 # Ignore subdirectories in “data”
 data/*
