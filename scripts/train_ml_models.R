@@ -1,6 +1,5 @@
 
 
-
 train_ml_models <- function(model_data,data_full) {
   
   input <- menu(c("yes", "no"), title="Are you sure you want to run this function? It will take > 10 hours.")
@@ -19,166 +18,77 @@ train_ml_models <- function(model_data,data_full) {
   }
   
   library(caret)
-  
-  ## set up leave one out cross validation 
-  ctrl <- trainControl(method = "LOOCV", search = "grid")
-  
-  ## start the clock
-  ptm <- proc.time() 
+  source('scripts/bayes_optim_caret.R')
   
   # random forest --------------------------------
   
-  rf_grid <-  expand.grid(.mtry = seq(50,100,10))
+  ptm <- proc.time() 
   
-  rf_fit <- train(y~., data=model_data,
-                  trControl=ctrl,
-                  tuneGrid = rf_grid,
-                  importance=T,
-                  ntree=200,
-                  method='rf')
+  ## boundaries
+  rf_bounds <-  list(mtry = c(2L,120L))
   
-  rf_param_error <- arrange(rf_fit$results, RMSE) 
+  ## Bayesian optimization 
+  rf_params <- bayes_optim_caret(model_data,'rf',rf_bounds,iter=30)
   
-  ## extract best predictions
-  rf_preds <- inner_join(rf_fit$pred,rf_fit$bestTune) %>%
-    mutate(pred = (exp(pred) * data_full$drain_sqkm) + 0.001,
-           obs = (exp(obs) * data_full$drain_sqkm) + 0.001) %>%
-    mutate(obs = replace(obs, obs<0.0025, 0))
+  time <- proc.time() - ptm 
   
   # gradient boosting machine ----------------------------
   
-  gbm_grid <- expand.grid(.nrounds = c(650,750),
-                          .max_depth = c(4,6),
-                          .eta = c(0.05),
-                          .gamma=c(5.5,7.5),
-                          .colsample_bytree=c(0.65),
-                          .min_child_weight=c(10),
-                          .subsample=c(0.55,0.65))
+  # http://xgboost.readthedocs.io/en/latest/parameter.html
+  gbm_bounds <- list(nrounds = c(1L,1000L),
+                     max_depth = c(1L,20L),
+                     eta = c(0,1),
+                     gamma=c(0,100),
+                     colsample_bytree=c(0.1,1),
+                     min_child_weight=c(0L,20L),
+                     subsample=c(0,1))
   
-
-  gbm_fit <- train(y~., data=model_data,
-                   trControl=ctrl,
-                   tuneGrid = gbm_grid,
-                   method='xgbTree',
-                   distribution="gaussian",
-                   verbose=FALSE)
-  
-  gbm_param_error <- arrange(gbm_fit$results, RMSE) 
-  
-  ## extract best predictions
-  gbm_preds <- inner_join(gbm_fit$pred,gbm_fit$bestTune) %>%
-    mutate(pred = (exp(pred) * data_full$drain_sqkm) + 0.001,
-           obs = (exp(obs) * data_full$drain_sqkm) + 0.001) %>%
-    mutate(obs = replace(obs, obs<0.002, 0))
+  ## Bayesian optimization 
+  gbm_params <- bayes_optim_caret(model_data,'xgbTree',gbm_bounds,iter=30)
   
   # cubist --------------------------------------------
+  ptm <- proc.time() 
   
-  cubist_grid <-  expand.grid(.committees = c(5,10,15),
-                              .neighbors = seq(3,9,1))
+  cubist_bounds <-  list(committees = c(1L,100L),
+                         neighbors = c(0L,9L))
   
-  cubist_fit <- train(y~., data=model_data,
-                      trControl=ctrl,
-                      tuneGrid=cubist_grid,
-                      method='cubist')
+  cubist_params <- bayes_optim_caret(model_data,'cubist',cubist_bounds,iter=30)
   
-  cubist_param_error <- arrange(cubist_fit$results, RMSE) 
-  
-  ## plot training
-  plot(cubist_fit)
-  
-  ## extract best predictions
-  cubist_preds <- inner_join(cubist_fit$pred,cubist_fit$bestTune) %>%
-    mutate(pred = exp(pred) * data_full$drain_sqkm,
-           obs = exp(obs) * data_full$drain_sqkm) %>%
-    mutate(obs = replace(obs, obs<0.002, 0))
+  time <- proc.time() - ptm 
   
   # support vector machine with Gaussian kernel --------------------
+  # run one more with larger C boundary
+  svmg_bounds <-  list(C = c(1,2),
+                       sigma = c(0,0.01))
   
-  svmg_grid <-  expand.grid(.sigma = c(0.0008, 0.008, 0.08, 0.8),
-                            .C = seq(0.5,5,0.5))
-  
-  svmg_fit <- train(y~., data=model_data,
-                   trControl=ctrl,
-                   tuneGrid = svmg_grid,
-                   method='svmRadial')
-  
-  svmg_param_error <- arrange(svmg_fit$results, RMSE) 
-  
-  ## plot training
-  plot(svmg_fit)
-  
-  ## extract best predictions
-  svmg_preds <- inner_join(svmg_fit$pred,svmg_fit$bestTune) %>%
-    mutate(pred = exp(pred) * data_full$drain_sqkm,
-           obs = exp(obs) * data_full$drain_sqkm) %>%
-    mutate(obs = replace(obs, obs<0.002, 0))
+  svmg_params <- bayes_optim_caret(model_data,'svmRadial',svmg_bounds,iter=50,acq='ucb')
   
   # support vector machine with polynomial kernel --------------------
   
-  svmp_grid <-  expand.grid(.scale = c(0.0008, 0.008, 0.08, 0.8),
-                            .C = seq(0.5,5,0.5),
-                            .degree = c(2,3,4))
+  svmp_bounds <-  list(C = c(1,10),
+                       degree = c(1L,3L),
+                       scale = c(0,1))
   
-  svmp_fit <- train(y~., data=model_data,
-                   trControl=ctrl,
-                   tuneGrid = svmp_grid,
-                   method='svmPoly')
-  
-  svmp_param_error <- arrange(svmp_fit$results, RMSE) 
-  
-  ## plot training
-  plot(svmp_fit)
-  
-  ## extract best predictions
-  svmp_preds <- inner_join(svmp_fit$pred,svmp_fit$bestTune) %>%
-    mutate(pred = exp(pred) * data_full$drain_sqkm,
-           obs = exp(obs) * data_full$drain_sqkm) %>%
-    mutate(obs = replace(obs, obs<0.002, 0))
+  svmp_params <- bayes_optim_caret(model_data,'svmPoly',svmp_bounds,iter=30)
   
   # k-nearest neighbors -------------------------------------------
   
-  kknn_grid <- expand.grid(kmax=c(1,10,20,30), # max number of neighbors
-                          distance = c(0.25,0.5,1,2),
-                          kernel = c("triangular"))
+  # kernel = c("triangular", "rectangular", 
+  #            "epanechnikov", "optimal")
   
-  kknn_fit <- train(y~., data=model_data,
-                   trControl = ctrl,
-                   tuneGrid = kknn_grid,
-                   method = "kknn")
+  kknn_bounds <- list(kmax=c(1L,224L), 
+                      distance = c(0,3),
+                      kernel = "triangular")
   
-  kknn_param_error <- arrange(kknn_fit$results, RMSE) 
-  
-  ## plot training
-  plot(kknn_fit)
-  
-  ## extract best predictions
-  kknn_preds <- inner_join(kknn.fit$pred,kknn_fit$bestTune) %>%
-    mutate(pred = exp(pred) * data_full$drain_sqkm,
-           obs = exp(obs) * data_full$drain_sqkm) %>%
-    mutate(obs = replace(obs, obs<0.002, 0))
-  
-  fitmets(kknn_preds)
-  
+  kknn_params <- bayes_optim_caret(model_data,'kknn',kknn_bounds,iter=30)
+
   # elastic net -------------------------------------------------
   
-  enet_grid <-  expand.grid(.alpha = seq(0, 1, 0.2),
-                            .lambda = seq(0.1,0.2,0.3))
+  enet_bounds <-  list(alpha = c(0,1),
+                       lambda = c(0,1.5))
   
-  enet_fit <- train(y~., data=model_data,
-                      trControl=ctrl,
-                      preProcess = NULL,
-                      tuneGrid=enet_grid,
-                      method='glmnet')
-  
-  enet_param_error <- arrange(enet_fit$results, RMSE) 
-  
-  ## plot training
-  plot(enet_fit)
-  
-  enet_preds <- inner_join(enet_fit$pred,enet_fit$bestTune) %>%
-    mutate(pred = exp(pred) * data_full$drain_sqkm,
-           obs = exp(obs) * data_full$drain_sqkm) %>%
-    mutate(obs = replace(obs, obs<0.002, 0))
+  enet_params <- bayes_optim_caret(model_data,'glmnet',enet_bounds,
+                                   iter=30,acq = "ucb")
   
   # models stop -----------------------------------------------
   

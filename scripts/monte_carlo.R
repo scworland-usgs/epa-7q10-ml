@@ -52,7 +52,7 @@ monte_carlo <- function(model_data) {
   n <- length(frac)*ncol(obs_number)-1
   
   for (i in 1:length(frac)) {
-    for (j in 1:(ncol(obs_number)-1)){
+    for (j in 1:(ncol(knn_obs_number)-1)){
       
       model_data_frac <- sample_frac(model_data_grouped,frac[i]) 
       rowi <- model_data_frac$row_num

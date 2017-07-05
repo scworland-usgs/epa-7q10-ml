@@ -244,10 +244,14 @@ cubist_params <- bayes_optim_caret(model_data,'cubist',cubist_bounds,iter=30)
 
 ### Description of monte_carlo()
 
-The Monte-Carlo analysis attempts to answer the following questions:  How does the predictive accuracy of a model compare relative to the other models as the amount of training data is increased? And similarly, would prediction accuracy be substantially improved with an increased number of gaged basins (i.e., are the models continuing to improve as we add more training data and is there evidence that installing more stream gages would be beneficial)? The Monte Carlo Analysis presented here can only answer the aforementioned questions relative to this particular dataset and these particular models.
+The Monte-Carlo analysis attempts to answer the following questions:  How does the predictive accuracy of a model compare relative to the other models as the amount of training data is increased? And similarly, would prediction accuracy be substantially improved with an increased number of gaged basins (i.e., are the models continuing to improve as we add more training data and is there evidence that installing more stream gages would be beneficial)? The Monte Carlo Analysis presented here can only answer the aforementioned questions relative to this particular dataset and these particular models. This is the algorithmic form of the monte carlo:
 
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[width=6in]{~/Documents/Ungaged basins/epa_7q10_ml/figures/epa_7q10_algorithm.png}
+\includegraphics[width=4in]{~/Documents/Ungaged basins/epa_7q10_ml/figures/epa_7q10_algorithm.png}
 \end{center}
 \end{figure}
+
+The "monte_carlo.R" function only completes a partial example using the k-nearest neighbors and null models. The partial analysis only using 10% and 20% of the data, and only repeats each step 10 times. 
+
+
