@@ -19,8 +19,7 @@ train_bl_models <- function(data_full) {
     mutate_each(funs(as.numeric)) %>% # make everything numeric
     scale() %>% # convert to z-score: (x-mu)/sigma
     as.data.frame() %>% # make data frame
-    mutate(y=data_full$y7q10) %>%
-    mutate(y=replace(y, y<0.01, 0.001)) %>%
+    mutate(y=data_full$y7q10+0.001) %>%
     mutate(y=log(y)) %>%
     select(y, class:aspect_eastness)
   

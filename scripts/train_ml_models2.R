@@ -39,7 +39,7 @@ train_ml_models <- function(model_data,data_full) {
                      max_depth = c(1L,20L),
                      eta = c(0,1),
                      gamma=c(0,100),
-                     colsample_bytree=c(0.005,1),
+                     colsample_bytree=c(0.1,1),
                      min_child_weight=c(0L,20L),
                      subsample=c(0,1))
   
@@ -47,18 +47,21 @@ train_ml_models <- function(model_data,data_full) {
   gbm_params <- bayes_optim_caret(model_data,'xgbTree',gbm_bounds,iter=30)
   
   # cubist --------------------------------------------
+  ptm <- proc.time() 
   
   cubist_bounds <-  list(committees = c(1L,100L),
-                         neighbors = seq(0L,9L))
+                         neighbors = c(0L,9L))
   
   cubist_params <- bayes_optim_caret(model_data,'cubist',cubist_bounds,iter=30)
   
+  time <- proc.time() - ptm 
+  
   # support vector machine with Gaussian kernel --------------------
   # run one more with larger C boundary
-  svmg_bounds <-  list(C = c(1,10),
-                       sigma = c(0,1))
+  svmg_bounds <-  list(C = c(1,2),
+                       sigma = c(0,0.01))
   
-  svmg_params <- bayes_optim_caret(model_data,'svmRadial',svmg_bounds,iter=30)
+  svmg_params <- bayes_optim_caret(model_data,'svmRadial',svmg_bounds,iter=50,acq='ucb')
   
   # support vector machine with polynomial kernel --------------------
   
@@ -70,29 +73,15 @@ train_ml_models <- function(model_data,data_full) {
   
   # k-nearest neighbors -------------------------------------------
   
-  kknn_grid <- expand.grid(kmax=c(10), # max number of neighbors
-                           distance = c(0.25,0.5,1,2),
-                           kernel = c("triangular", "rectangular", 
-                                      "epanechnikov", "optimal"))
+  # kernel = c("triangular", "rectangular", 
+  #            "epanechnikov", "optimal")
   
-  kknn_fit <- train(y~., data=model_data,
-                    trControl = ctrl,
-                    tuneGrid = knn_grid,
-                    method = "kknn")
+  kknn_bounds <- list(kmax=c(1L,224L), 
+                      distance = c(0,3),
+                      kernel = "triangular")
   
-  kknn_param_error <- arrange(kknn_fit$results, RMSE) 
-  
-  ## plot training
-  plot(kknn_fit)
-  
-  ## extract best predictions
-  kknn_preds <- inner_join(kknn.fit$pred,kknn_fit$bestTune) %>%
-    mutate(pred = exp(pred) * data_full$drain_sqkm,
-           obs = exp(obs) * data_full$drain_sqkm) %>%
-    mutate(obs = replace(obs, obs<0.002, 0))
-  
-  fitmets(kknn_preds)
-  
+  kknn_params <- bayes_optim_caret(model_data,'kknn',kknn_bounds,iter=30)
+
   # elastic net -------------------------------------------------
   
   enet_bounds <-  list(alpha = c(0,1),

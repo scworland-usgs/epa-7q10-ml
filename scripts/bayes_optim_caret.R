@@ -42,14 +42,26 @@ bayes_optim_caret <- function(data,method,bounds,iter=30,acq = "ei"){
   # run bayesian optimization search for parameters
   bayes_opt_search <- BayesianOptimization(sample_fun(params),
                                            bounds = bounds,
-                                           init_points = 10,
+                                           init_points = 50,
                                            n_iter = iter,
                                            acq = acq, 
                                            kappa = 2.5, 
-                                           eps = 0.5,
+                                           eps = 2,
                                            kernel = list(type="matern",nu=5/2),
-                                           verbose = TRUE,
-                                           trace=TRUE)
+                                           #kernel = list(type = "exponential",power=2),
+                                           verbose = TRUE)
+  
+   # hold <- data.frame(svmg_params$History)
+   # 
+   # p <- ggplot(hold, aes(x=C, y=sigma,size = Value, color=Value)) +
+   #   stat_density_2d(color="grey") + geom_point() +
+   #   scale_size_continuous(range=c(0.1,3)) +
+   #   theme_bw() +
+   #   scale_color_viridis() +
+   #   geom_point(aes(x=1.51,y=0.004),color="red",shape=3)+
+   #   theme(legend.position="none")
+   # 
+   # print(p)
   
   output <- bayes_opt_search
   

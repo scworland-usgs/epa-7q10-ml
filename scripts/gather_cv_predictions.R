@@ -17,7 +17,7 @@ gather_cv_predictions <- function(model_data,data_full) {
   
   ## pre-allocate prediction matrix
   ml_preds <- matrix(data=NA, ncol=8, nrow=nrow(model_data))
-  colnames(ml_preds) <- c("rf","knn","gbm","svmp","svmr","cubist","enet","obs")
+  colnames(ml_preds) <- c("rf","knn","gbm","svmp","svmg","cubist","enet","obs")
   ok_preds <- numeric()
   
   ## This for-loop makes leave-one-out cross validated predictions using the optimal
@@ -53,8 +53,8 @@ gather_cv_predictions <- function(model_data,data_full) {
                      kpar=list(degree=2, scale=0.0025))
     
     set.seed(1)
-    svmr_fit <- ksvm(y~., data=train, C=2.7214, kernel="rbfdot", #*
-                     kpar=list(sigma=0.0042))
+    svmg_fit <- ksvm(y~., data=train, C=1.51, kernel="rbfdot", #*
+                     kpar=list(sigma= 0.0044))
     
     
     # fit models with design matrix and response vector
@@ -79,9 +79,9 @@ gather_cv_predictions <- function(model_data,data_full) {
     # test model on left-out observation
     ml_preds[i,1] <- (exp(predict(rf_fit, test)) * data_full$drain_sqkm[i]) - 0.001
     ml_preds[i,2] <- (exp(knn_fit$fitted.values) * data_full$drain_sqkm[i]) - 0.001
-    ml_preds[i,3] <- (exp(predict(gbm_fit, test, n.trees=100)) * data_full$drain_sqkm[i]) - 0.001
+    ml_preds[i,3] <- (exp(predict(gbm_fit, as.matrix(test))) * data_full$drain_sqkm[i]) - 0.001
     ml_preds[i,4] <- (exp(predict(svmp_fit, test)) * data_full$drain_sqkm[i]) - 0.001
-    ml_preds[i,5] <- (exp(predict(svmr_fit, test)) * data_full$drain_sqkm[i]) - 0.001
+    ml_preds[i,5] <- (exp(predict(svmg_fit, test)) * data_full$drain_sqkm[i]) - 0.001
     ml_preds[i,6] <- (exp(predict(cubist_fit, test2)) * data_full$drain_sqkm[i]) - 0.001
     ml_preds[i,7] <- (exp(predict(enet_fit, test2, s=1.3741)) * data_full$drain_sqkm[i]) - 0.001
     

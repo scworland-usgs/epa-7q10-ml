@@ -137,14 +137,13 @@ train_ml_models <- function(model_data,data_full) {
   
   # k-nearest neighbors -------------------------------------------
   
-  kknn_grid <- expand.grid(kmax=c(10), # max number of neighbors
+  kknn_grid <- expand.grid(kmax=c(1,10,20,30), # max number of neighbors
                           distance = c(0.25,0.5,1,2),
-                          kernel = c("triangular", "rectangular", 
-                                     "epanechnikov", "optimal"))
+                          kernel = c("triangular"))
   
   kknn_fit <- train(y~., data=model_data,
                    trControl = ctrl,
-                   tuneGrid = knn_grid,
+                   tuneGrid = kknn_grid,
                    method = "kknn")
   
   kknn_param_error <- arrange(kknn_fit$results, RMSE) 
