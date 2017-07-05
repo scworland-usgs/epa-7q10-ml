@@ -9,6 +9,7 @@
 # Ignore subdirectories in “scripts”
 scripts/final_scripts
 scripts/misc_scripts
+figures/epa_7q10_algorithm.png
 .Rapp.history
 
 # Ignore subdirectories in “data”
