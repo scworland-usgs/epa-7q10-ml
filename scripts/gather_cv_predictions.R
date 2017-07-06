@@ -5,7 +5,7 @@ gather_cv_predictions <- function(model_data,data_full) {
   library(reshape2)
   library(randomForest)
   library(kknn)
-  library(gbm)
+  library(xgboost)
   library(kernlab)
   library(Cubist)
   library(glmnet)
@@ -62,7 +62,7 @@ gather_cv_predictions <- function(model_data,data_full) {
     y2 <- as.numeric(train[,1])
     test2 <- as.matrix(test[,-1])
     
-    cubist_fit <- cubist(train2, y2, committees=36, neighbors=5, #*
+    cubist_fit <- cubist(train2, y2, committees=50, neighbors=8, #*
                          control=cubistControl(seed=1))
     
     enet_fit <- glmnet(train2,y2,alpha=0.0) #*
@@ -70,9 +70,13 @@ gather_cv_predictions <- function(model_data,data_full) {
     # fit ordinary kriging
     train_ok <- data_ok[-i, ]
     test_ok <- data_ok[i, ]
+    
+    maxrange <- summary(dist(data_ok[, c("lat_gage_utm", "lng_gage_utm")],
+                             diag = TRUE, upper = TRUE))[6]
 
     ok_fit <- ordinary_kriging(train_ok$y, train_ok[,3:4], test_ok[,3:4], numbins=10,
-                             CovMod="spherical", FixNug=F, FixKap=T, neighbors=NA)
+                             CovMod="spherical", FixNug=F, FixKap=T, neighbors=NA,
+                             maxrange=maxrange)
     
     ok_preds[i] <- (exp(ok_fit$Pred) * test_ok$drain_sqkm / 2.589975) - 0.001
 
@@ -87,6 +91,8 @@ gather_cv_predictions <- function(model_data,data_full) {
     
     # add observations
     ml_preds[i,8] <- data_full$y7q10[i]
+    
+    print(paste0("ML and kriging: ",round(i/nrow(model_data)*100,2),"%"))
   }
   
   

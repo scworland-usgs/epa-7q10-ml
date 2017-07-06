@@ -11,6 +11,7 @@ stack_models <- function(cv_preds) {
   }
   
   library(caret)
+  source('scripts/bayes_optim_caret.R')
   
   ## add median and mean for stacked model
   cv_preds$med <-apply(cv_preds[,2:11],1,median) 
@@ -20,19 +21,27 @@ stack_models <- function(cv_preds) {
   ## Stacked regression combines the LOO-CV predictions (and mean and median) from all 
   ## the machine learning models using a level-1 M5-cubist model
   
-  ### Use grid search to find optimal hyperparameters
-  ctrl <- trainControl(method = "LOOCV", search="grid")
-  stack_train <- train(obs~., data=cv_preds,
-                        trControl=ctrl,
-                        tuneLength=10,
-                        method='cubist')
+  gbm_bounds <- list(nrounds = c(1L,1000L),
+                     max_depth = c(1L,20L),
+                     eta = c(0,1),
+                     gamma=c(0,100),
+                     colsample_bytree=c(0.1,1),
+                     min_child_weight=c(0L,20L),
+                     subsample=c(0,1))
+  
+  ## Bayesian optimization 
+  stack_train <- bayes_optim_caret(cv_preds,'xgbTree',gbm_bounds,iter=3)
   
   ## tuned hyperparameters
-  committees = stack_train$bestTune[[1]]
-  neighbors = stack_train$bestTune[[2]]
+  param_list_df <- data.frame(stack_train$Best_Par) %>% 
+    mutate(name=row.names(.))
   
-  print(paste0("optimal number of committees for stacked model = ", committees))
-  print(paste0("optimal number of neighbors for stacked model = ", neighbors))
+  names(param_list)[1] <- "value"
+  
+  print(param_list_df)
+  
+  param_list <- split(param_list_df $value, param_list_df$name)
+  
   
   ## calculate loo-cv cross validate predictions using for-loop like above. The optimimal
   ### hyperparameters of committees=10, and neighbors=2 were found above.
@@ -43,8 +52,12 @@ stack_models <- function(cv_preds) {
     train <- cv_preds[-i,]
     test <- cv_preds[i,]
     
-    stack_cubist <- cubist(train[,-1], train[,1], committees=10, neighbors=0,
-                           control=cubistControl(seed=1))
+    set.seed(1)
+    gbm_stack <- xgboost(data=as.matrix(train), #*
+                       label=train$y,
+                       verbose=0,
+                       nrounds=56, 
+                       params=param_list)
     
     # predict left out observations
     stack_preds[i] <- predict(stack_cubist, test[,-1])

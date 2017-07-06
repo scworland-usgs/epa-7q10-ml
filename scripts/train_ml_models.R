@@ -28,7 +28,7 @@ train_ml_models <- function(model_data,data_full) {
   rf_bounds <-  list(mtry = c(2L,120L))
   
   ## Bayesian optimization 
-  rf_params <- bayes_optim_caret(model_data,'rf',rf_bounds,iter=30)
+  rf_params <- bayes_optim_caret(model_data,'rf',rf_bounds,iter=15,acq = "ucb")
   
   time <- proc.time() - ptm 
   
@@ -44,24 +44,21 @@ train_ml_models <- function(model_data,data_full) {
                      subsample=c(0,1))
   
   ## Bayesian optimization 
-  gbm_params <- bayes_optim_caret(model_data,'xgbTree',gbm_bounds,iter=30)
+  gbm_params <- bayes_optim_caret(model_data,'xgbTree',gbm_bounds,iter=15,acq = "ucb")
   
   # cubist --------------------------------------------
-  ptm <- proc.time() 
   
-  cubist_bounds <-  list(committees = c(1L,100L),
+  cubist_bounds <-  list(committees = c(1L,100L), # 3.5 hours
                          neighbors = c(0L,9L))
   
-  cubist_params <- bayes_optim_caret(model_data,'cubist',cubist_bounds,iter=30)
-  
-  time <- proc.time() - ptm 
-  
+  cubist_params <- bayes_optim_caret(model_data,'cubist',cubist_bounds,iter=3,acq = "ucb")
+
   # support vector machine with Gaussian kernel --------------------
   # run one more with larger C boundary
-  svmg_bounds <-  list(C = c(1,2),
-                       sigma = c(0,0.01))
+  svmg_bounds <-  list(C = c(1,5),
+                       sigma = c(0,0.1))
   
-  svmg_params <- bayes_optim_caret(model_data,'svmRadial',svmg_bounds,iter=50,acq='ucb')
+  svmg_params <- bayes_optim_caret(model_data,'svmRadial',svmg_bounds,iter=10,acq='ucb')
   
   # support vector machine with polynomial kernel --------------------
   
@@ -69,7 +66,7 @@ train_ml_models <- function(model_data,data_full) {
                        degree = c(1L,3L),
                        scale = c(0,1))
   
-  svmp_params <- bayes_optim_caret(model_data,'svmPoly',svmp_bounds,iter=30)
+  svmp_params <- bayes_optim_caret(model_data,'svmPoly',svmp_bounds,iter=15,acq = "ucb")
   
   # k-nearest neighbors -------------------------------------------
   
@@ -80,15 +77,15 @@ train_ml_models <- function(model_data,data_full) {
                       distance = c(0,3),
                       kernel = "triangular")
   
-  kknn_params <- bayes_optim_caret(model_data,'kknn',kknn_bounds,iter=30)
+  # give an error
+  kknn_params <- bayes_optim_caret(model_data,'kknn',kknn_bounds,iter=15,acq = "ucb")
 
   # elastic net -------------------------------------------------
   
   enet_bounds <-  list(alpha = c(0,1),
                        lambda = c(0,1.5))
   
-  enet_params <- bayes_optim_caret(model_data,'glmnet',enet_bounds,
-                                   iter=30,acq = "ucb")
+  enet_params <- bayes_optim_caret(model_data,'glmnet',enet_bounds,iter=30,acq = "ucb")
   
   # models stop -----------------------------------------------
   
@@ -97,9 +94,14 @@ train_ml_models <- function(model_data,data_full) {
   
   # save models
   
-  ml_preds <- list(rf=rf.preds, 
-                   cubist=cubist.preds, 
-                   gbm=gbm.preds, 
-                   svm=svm.preds)
+  ml_params <- list(rf_params, 
+                   gbm_params, 
+                   cubist_params, 
+                   svmg_params,
+                   svmp_params,
+                   kkkn_params,
+                   enet_params)
+  
+  return(ml_params)
   
 }

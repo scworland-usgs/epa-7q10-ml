@@ -5,12 +5,9 @@
 # Applies ordinary kriging with custom constraints.
 
 ordinary_kriging <- function(netdata, netlatlon, tarlatlon, numbins, CovMod,
-                  FixNug, FixKap, neighbors) {
+                  FixNug, FixKap, neighbors, maxrange) {
   
   library(geoR)
-  
-  maxrange <- summary(dist(data_ok[, c("lat_gage_utm", "lng_gage_utm")],
-                           diag = TRUE, upper = TRUE))[6]
   
   netdata[!is.finite(netdata)] <- NA
   NDX <- !is.na(netdata)

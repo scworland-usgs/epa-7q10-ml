@@ -226,7 +226,7 @@ A similar process is done for the region of influenced censored regression model
 
 ### Description of train_ml_models()
 
-The process for the machine learning models is conceptually similar to the baseline models, but is much more computationally expensive. This basic pipeline involves (1) generating a bunch of points in hyperparameters and RMSE space to be used as substrate for a gaussian process model, and (2) use bayesian optimization to estimate the functional relationship between the hyperparameters and the RMSE. The gaussian process model attempts to discover a function that relates values of the hyperparameters to an output, in this case, the RMSE. Then an optimization function is used to seek for the combination of parameters where the function is maximized. Theoretically this should result in a set of optimal hyperparameters for a given model. Below is an example using a cubist model. There are only two hyperparameters for a cubist model, the number of \textit{neighbors} and the number of \textit{committees}. The number of nodes used in the smoothed-prediction process is referred to as \textit{neighbors}. The predictions from single-tree cubist model can be improved using a boosting-like ensemble method where subsequent trees are built using the residuals from the single tree. The number of trees used in the ensemble is referred to as \textit{committees}. We don't know what values to select apriori, so we use the steps above. I have automated this process using a custom function that is a wrapper around both the `train` function from the caret package and the `BayesianOptimization` function from the rBayesianOptimization package.
+The process for the machine learning models is conceptually similar to the baseline models, but is much more computationally expensive. This basic pipeline involves (1) generating a bunch of points in hyperparameters and RMSE space to be used as substrate for a gaussian process model, and (2) use bayesian optimization to estimate the functional relationship between the hyperparameters and the RMSE. The gaussian process model attempts to discover a function that relates values of the hyperparameters to an output, in this case, the RMSE. Then an optimization function is used to seek for the combination of parameters where the function is maximized. Theoretically this should result in a set of optimal hyperparameters for a given model. Below is an example using a support vector machine (SVM) model. There are only two hyperparameters for a SVM model, the effect that the large residuals have on the regression is controlled by the \textit{cost (C)} and the standard deviation of the Gaussian kernel is controlled by \textit{sigma}. We don't know what values to select apriori, so we use the steps above. I have automated this process using a custom function that is a wrapper around both the `train` function from the caret package and the `BayesianOptimization` function from the rBayesianOptimization package.
 
 \vspace{8pt}
 
@@ -235,12 +235,44 @@ library(caret)
 source('scripts/bayes_optim_caret.R')
 
 # list of parameter boundaries
-cubist_bounds <-  list(committees = c(1L,100L),
-                       neighbors = c(0L,9L))
+svmg_bounds <-  list(C = c(1,5),
+                     sigma = c(0,1))
 
-# pass to custom function 
-cubist_params <- bayes_optim_caret(model_data,'cubist',cubist_bounds,iter=30)
+# pass to custom function
+svmg_params <- bayes_optim_caret(model_data,'svmRadial',svmg_bounds,iter=10,acq='ucb')
 ```
+
+```{r,echo=F,eval=F}
+seed <- svmg_params$History %>%
+  mutate(iter_type = ifelse(Round>10,"bayes opt","random seed")) %>%
+  filter(iter_type=="random seed")
+
+opt <- svmg_params$History %>%
+  mutate(iter_type = ifelse(Round>10,"bayes opt","random seed")) %>%
+  filter(iter_type=="bayes opt") 
+
+ggplot() +
+  geom_segment(data=opt,
+               aes(x=C,y=sigma,
+                   xend=c(tail(C, n=-1), NA),
+                   yend=c(tail(sigma, n=-1), NA),
+                   #alpha=Round,
+                   color=Value),
+               arrow=arrow(length=unit(0.2,"cm"))) +
+  geom_point(data=seed,aes(x=C,y=sigma,fill=Value),shape=21) +
+  scale_alpha(range=c(0.1,0.8),guide=F) +
+  theme_bw() +
+  scale_fill_viridis() +
+  scale_color_viridis(guide=F)
+```
+
+We can easily plot the parameter search for the SVM as it only has two parameters. The algorithm first seeds the search space with 10 random RMSE values resulting from different combinations of parameters. These are represented as the colored points below. The value is the negative RMSE in log space. We take the negation of the RMSE because the algorithm seeks to maximize the function. The line segments and the arrows represent the iterations of the Gaussian process model, with the color of the line indicating the resulting -RMSE for each iteration. 
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=5in]{~/Documents/Ungaged basins/epa_7q10_ml/figures/svm_search.png}
+\end{center}
+\end{figure}
 
 ### Description of monte_carlo()
 

@@ -42,13 +42,13 @@ bayes_optim_caret <- function(data,method,bounds,iter=30,acq = "ei"){
   # run bayesian optimization search for parameters
   bayes_opt_search <- BayesianOptimization(sample_fun(params),
                                            bounds = bounds,
-                                           init_points = 50,
+                                           init_points = 1,
                                            n_iter = iter,
                                            acq = acq, 
-                                           kappa = 2.5, 
-                                           eps = 2,
-                                           kernel = list(type="matern",nu=5/2),
-                                           #kernel = list(type = "exponential",power=2),
+                                           kappa = 0.1, 
+                                           eps = 0.0,
+                                           #kernel = list(type="matern",nu=5/2),
+                                           kernel = list(type = "exponential",power=2),
                                            verbose = TRUE)
   
    # hold <- data.frame(svmg_params$History)
