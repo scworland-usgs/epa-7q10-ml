@@ -31,7 +31,7 @@ gather_cv_predictions <- function(model_data,data_full) {
     
     #fit model models with formula
     set.seed(1)
-    rf_fit <- randomForest(y~., data=train, ntree=500, mtry=114) #*
+    rf_fit <- randomForest(y~., data=train, ntree=500, mtry=116) #*
     
     set.seed(1)
     knn_fit <- kknn(y~., train, test, k = 5, distance = 0.25, kernel = "triangular")

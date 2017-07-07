@@ -92,6 +92,7 @@ source("scripts/gather_cv_predictions.R")
 ## shown in the paper recreate the correct error values. 
 
 cv_preds <- gather_cv_predictions(model_data,data_full)
+#cv_preds <- read.csv("data/cv_preds.csv")
 
 #------------------------------------------------------------------------------
 
@@ -104,7 +105,8 @@ source("scripts/stack_models.R")
 ## using the loo-cv predictions from the machine learning and baseline models. The 
 ## stack_models() function returns all of the predictions in a single dataframe
 
-all_preds <- stack_models(cv_preds)
+#all_preds <- stack_models(cv_preds)
+all_preds <- read.csv("data/all_preds.csv")
 
 #------------------------------------------------------------------------------
 
@@ -115,6 +117,7 @@ source("scripts/fit_metrics.R")
 ## the RMSE, unit area RMSE, median % error, and Nash-Sutcliffe coefficient. The
 ## input is the cross validated predictions from all the models and data_full
 
+all_preds <- read.csv("data/all_preds.csv")
 model_error <- fit_metrics(all_preds,data_full)
 
 #------------------------------------------------------------------------------

@@ -16,32 +16,25 @@ stack_models <- function(cv_preds) {
   ## add median and mean for stacked model
   cv_preds$med <-apply(cv_preds[,2:11],1,median) 
   cv_preds$mean <-apply(cv_preds[,2:11],1,mean) 
+  names(cv_preds)[1] <- "y"
   
   ## stacked model (described by figure 3 in paper)
   ## Stacked regression combines the LOO-CV predictions (and mean and median) from all 
   ## the machine learning models using a level-1 M5-cubist model
   
-  gbm_bounds <- list(nrounds = c(1L,1000L),
-                     max_depth = c(1L,20L),
-                     eta = c(0,1),
-                     gamma=c(0,100),
-                     colsample_bytree=c(0.1,1),
-                     min_child_weight=c(0L,20L),
-                     subsample=c(0,1))
+  cubist_bounds <-  list(committees = c(1L,100L), 
+                         neighbors = c(0L,9L))
   
-  ## Bayesian optimization 
-  stack_train <- bayes_optim_caret(cv_preds,'xgbTree',gbm_bounds,iter=3)
+  stack_train <- bayes_optim_caret(cv_preds,'cubist',cubist_bounds,iter=5,acq = "ei")
   
   ## tuned hyperparameters
-  param_list_df <- data.frame(stack_train$Best_Par) %>% 
-    mutate(name=row.names(.))
+  params <- data.frame(stack_train$Best_Par) %>% 
+    dplyr::mutate(name=row.names(.)) %>%
+    dplyr::select(name,value=stack_train.Best_Par)
   
-  names(param_list)[1] <- "value"
+  print(params)
   
-  print(param_list_df)
-  
-  param_list <- split(param_list_df $value, param_list_df$name)
-  
+  param_list <- split(params$value, params$name)
   
   ## calculate loo-cv cross validate predictions using for-loop like above. The optimimal
   ### hyperparameters of committees=10, and neighbors=2 were found above.
@@ -49,24 +42,28 @@ stack_models <- function(cv_preds) {
   for (i in 1:nrow(cv_preds)){
     
     # select nrows-1 from model data
-    train <- cv_preds[-i,]
-    test <- cv_preds[i,]
+    train <- as.matrix(cv_preds[-i,-1])
+    y_train <- as.numeric(cv_preds[-i,1])
+    test <- as.matrix(cv_preds[i,-1])
     
-    set.seed(1)
-    gbm_stack <- xgboost(data=as.matrix(train), #*
-                       label=train$y,
-                       verbose=0,
-                       nrounds=56, 
-                       params=param_list)
+    cubist_stack <- cubist(train, y_train, committees=param_list[[1]], 
+                           neighbors=param_list[[2]], #*
+                           control=cubistControl(seed=1))
     
     # predict left out observations
-    stack_preds[i] <- predict(stack_cubist, test[,-1])
+    stack_preds[i] <- predict(cubist_stack, test)
+    
+    if((i %% 2) == 0){
+      print(paste0(round(i/nrow(model_data)*100,2),"%"))
+    }
+    
   }
   
   # add stacked predictions to to ml_preds. meta_cubist==stacked model
   all_preds <- select(cv_preds, -med,-mean)
-  all_preds$meta_cubist <- stack_preds
+  all_preds$meta_model <- stack_preds
   
   return(all_preds)
   
 }
+

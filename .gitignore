@@ -9,6 +9,7 @@
 # Ignore subdirectories in “scripts”
 scripts/final_scripts
 scripts/misc_scripts
+scripts/model_archive_readme.pdf
 .Rapp.history
 
 # Ignore subdirectories in “data”

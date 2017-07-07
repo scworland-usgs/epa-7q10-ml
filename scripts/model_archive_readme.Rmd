@@ -80,33 +80,18 @@ model_data <- expVars$cleanBCs %>% # start with basin chars
   select(y, class,lat_gage:aspect_eastness) # reorder column positions
 ```
 
-The raw 7Q10s are divided by the drainage area of the basin and log transformed prior to modelling. Because some of the 7Q10's are zero, a small, arbitrary constant of 0.001 was added to each 7Q10 value prior to taking the log transform. This data transformation for the baseline models is slightly different, and is explained in the "Description of train_bl_models" section below. After the data is loaded, the first steps is to find the optimal hyperparameters of for all of the models using random search and bayesian optimization. This process will take over 24 hours for all of the models, and we already provide the optimal values in the "gather_cv_predictions.R" file. You can go ahead and jump straight to this step. The `gather_cv_predictions()` function calculates prediction for each basin and model in a leave-one-out cross validation framework. With that being said, this function will still take ~45 minutes to run. 
+The raw 7Q10s are divided by the drainage area of the basin and log transformed prior to modelling. Because some of the 7Q10's are zero, a small, arbitrary constant of 0.001 was added to each 7Q10 value prior to taking the log transform. This data transformation for the baseline models is slightly different, and is explained in the "Description of train_bl_models" section below. After the data is loaded, the first steps is to find the optimal hyperparameters of for all of the models using random search and bayesian optimization. This process will take over 24 hours for all of the models, and we already provide the optimal values in the "gather_cv_predictions.R" file. The leave-one-out predicted values are included in the "all_preds.csv" file. You can go ahead and jump straight to the performance metrics section in the "main.R" file. 
 
 \vspace{8pt}
 
 ```{r,eval=F}
-# gather cross validation predictions
-source("scripts/gather_cv_predictions.R")
-cv_preds <- gather_cv_predictions(model_data,data_full)
-```
-
-The next step is to build the ensemble-stacked model using the cross validated predictions calculated in the step above. The output, `all_preds`, is a matrix of the cross validation predictions for all the models and the actual observations. This is the result that is used for the bulk of the analysis. 
-
-\vspace{8pt}
-
-```{r,eval=F}
-# stacked regression
-source("scripts/stack_models.R")
-all_preds <- stack_models(cv_preds)
-```
-
-Calculate fit metrics using the the cross validation predictions,
-
-\vspace{8pt}
-
-```{r,eval=F}
-# calculate fit metrics
+# source fit_metrics function
 source("scripts/fit_metrics.R")
+
+# load cross validated predictions
+all_preds <- read.csv("data/all_preds.csv")
+
+# calculate model error
 model_error <- fit_metrics(all_preds,data_full)
 ```
 
@@ -124,7 +109,7 @@ source("scripts/partial_dependence.R")
 pdp_data <- partial_dependence(model_data,var_imp_overall)
 ```
 
-Note that the variable importance and partial dependence don't actually require direct inputs from the other functions above. However, the model selections for the variable importance are based off pieces of the earlier analysis. The very last step is to create plots from the paper:
+Note that the variable importance and partial dependence don't actually require direct inputs from the other functions above. However, the model selections for the variable importance are based off pieces of the earlier analysis. The very last step is to create plots from the paper (skip the monte-carlo for now):
 
 \vspace{8pt}
 
