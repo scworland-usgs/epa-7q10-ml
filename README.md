@@ -1,6 +1,6 @@
 # EPA and USGS regionalization of 7Q10
-This repository contains the scripts associated with https://doi.org/10.5066/F7CR5S4T
+This repository contains the scripts associated with https://doi.org/10.5066/F7CR5S4T. The basic file contents and dependencies look like:
 
 ![Overview of relationship between scripts in the "scripts" folder](https://github.com/scworland-usgs/epa-7q10-ml/blob/master/figures/epa_7q10_ml_scripts.png?raw=true)
 
- 
+ The arrows should be interpreted as "output dependency flow". The steps should be run in roughly clockwise order. Each primary step can be run directly with "main.R" file via custom R functions that have the same name as the othe R files in the figure above. Solid lines indicate primary functions that are sourced directly within "main.R" file, and the dashed lines indicate secondary functions that are sourced by the primary functions. For example, the "train_ml_models.R" file is sourced and run directly by "main.R", but "train_ml_models.R" is depedent on "bayes_optim_caret.R". The idea behind structuring the model archive in this way is that output dependencies can be traced directly back to the input data csv file titled "lowflow_sc_ga_al_gagesII_2015.csv". The steps from the data file to the output should be completely reproducible (With the exception of possible stochastic differences in model training) if functions are run in sequential order.
