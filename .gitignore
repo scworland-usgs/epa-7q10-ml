@@ -14,4 +14,5 @@ scripts/misc_scripts
 # Ignore subdirectories in “data”
 data/*
 !data/lowflow_sc_ga_al_gagesII_2015.csv
+!data/all_preds.csv
 .Rproj.user
