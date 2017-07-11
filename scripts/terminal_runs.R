@@ -33,43 +33,15 @@ model_data <- expVars$cleanBCs %>% # start with basin chars
   select(y, class,lat_gage:aspect_eastness) # reorder column positions
 
 #------------------------------------------------------------------------------
-source('scripts/bayes_optim_caret.R')
+source("scripts/stack_models.R")
+cv_preds <- read.csv("data/cv_preds.csv")
+all_preds <- stack_models(cv_preds)
 
-ptm <- proc.time() 
+write.csv(all_preds,"data/all_preds.csv",row.names = F)
 
-svmp_bounds <-  list(C = c(0,2),
-                     degree = c(1L,2L),
-                     scale = c(0,0.05))
 
-svmp_params <- bayes_optim_caret(model_data,'svmPoly',svmp_bounds,iter=10,acq = "ucb")
 
-time <- proc.time() - ptm 
 
-print(time)
 
-write.csv(svmp_params$History,"data/svmp_params.csv",row.names = F)
 
-svmp <- read.csv("data/svmp_params.csv")
-
-seed <- svmp %>%
-  mutate(iter_type = ifelse(Round>50,"bayes opt","random seed"),
-         degree = as.character(degree)) %>%
-  filter(iter_type=="random seed")
-
-opt <- svmp %>%
-  mutate(iter_type = ifelse(Round>50,"bayes opt","random seed")) %>%
-  filter(iter_type=="bayes opt")
-
-ggplot() +
-  geom_segment(data=opt,
-               aes(x=C,y=scale,
-                   xend=c(tail(C, n=-1), NA),
-                   yend=c(tail(scale, n=-1), NA),
-                   color=Value),
-               arrow=arrow(length=unit(0.2,"cm"))) +
-  geom_point(data=seed,aes(x=C,y=scale,size=degree,fill=Value),shape=21) +
-  geom_text(data=opt,aes(x=C,y=scale,label=Round-50)) +
-  theme_bw() +
-  scale_fill_viridis() +
-  scale_color_viridis(guide=F)
 

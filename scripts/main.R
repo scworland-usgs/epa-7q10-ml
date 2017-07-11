@@ -91,8 +91,8 @@ source("scripts/gather_cv_predictions.R")
 ## during the training step), but it allows a user to verify that the inputs 
 ## shown in the paper recreate the correct error values. 
 
-cv_preds <- gather_cv_predictions(model_data,data_full)
-#cv_preds <- read.csv("data/cv_preds.csv")
+#cv_preds <- gather_cv_predictions(model_data,data_full)
+cv_preds <- read.csv("data/cv_preds.csv")
 
 #------------------------------------------------------------------------------
 
@@ -117,7 +117,6 @@ source("scripts/fit_metrics.R")
 ## the RMSE, unit area RMSE, median % error, and Nash-Sutcliffe coefficient. The
 ## input is the cross validated predictions from all the models and data_full
 
-all_preds <- read.csv("data/all_preds.csv")
 model_error <- fit_metrics(all_preds,data_full)
 
 #------------------------------------------------------------------------------
@@ -134,6 +133,9 @@ source("scripts/partial_dependence.R")
 
 var_imp_overall <- var_imp(model_data)
 pdp_data <- partial_dependence(model_data,var_imp_overall)
+
+pdp_combined_df <- do.call("rbind", pdp_combined) %>%
+  mutate(variable = factor(variable, levels = levels))
 
 #------------------------------------------------------------------------------
 

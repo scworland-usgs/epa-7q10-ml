@@ -5,7 +5,7 @@ gather_cv_predictions <- function(model_data,data_full) {
   library(reshape2)
   library(randomForest)
   library(kknn)
-  library(xgboost)
+  library(gbm)
   library(kernlab)
   library(Cubist)
   library(glmnet)
@@ -31,22 +31,15 @@ gather_cv_predictions <- function(model_data,data_full) {
     
     #fit model models with formula
     set.seed(1)
-    rf_fit <- randomForest(y~., data=train, ntree=500, mtry=116) #*
+    rf_fit <- randomForest(y~., data=train, ntree=500, mtry=116) 
     
     set.seed(1)
     knn_fit <- kknn(y~., train, test, k = 5, distance = 0.25, kernel = "triangular")
     
     set.seed(1)
-    gbm_fit <- xgboost(data=as.matrix(train), #*
-                       label=train$y,
-                       verbose=0,
-                       nrounds=56, 
-                       params=list(max_depth=16,
-                                   eta=0.1883,
-                                   gamma=5.1394,
-                                   colsample_bytree=0.8558,
-                                   min_child_weight=14,
-                                   subsample=0.7868))
+    gbm_fit <- gbm(y~., data=train, distribution="gaussian", n.trees=439,
+                   interaction.depth=15, n.minobsinnode = 14, shrinkage=0.0671,
+                   verbose=F,keep.data=F)
     
     set.seed(1)
     svmp_fit <- ksvm(y~., data=train, C=1, kernel="polydot",
@@ -83,7 +76,7 @@ gather_cv_predictions <- function(model_data,data_full) {
     # test model on left-out observation
     ml_preds[i,1] <- (exp(predict(rf_fit, test)) * data_full$drain_sqkm[i]) - 0.001
     ml_preds[i,2] <- (exp(knn_fit$fitted.values) * data_full$drain_sqkm[i]) - 0.001
-    ml_preds[i,3] <- (exp(predict(gbm_fit, as.matrix(test))) * data_full$drain_sqkm[i]) - 0.001
+    ml_preds[i,3] <- (exp(predict(gbm_fit, test, n.trees=439)) * area[i]) - 0.001
     ml_preds[i,4] <- (exp(predict(svmp_fit, test)) * data_full$drain_sqkm[i]) - 0.001
     ml_preds[i,5] <- (exp(predict(svmg_fit, test)) * data_full$drain_sqkm[i]) - 0.001
     ml_preds[i,6] <- (exp(predict(cubist_fit, test2)) * data_full$drain_sqkm[i]) - 0.001
@@ -92,7 +85,7 @@ gather_cv_predictions <- function(model_data,data_full) {
     # add observations
     ml_preds[i,8] <- data_full$y7q10[i]
     
-    print(paste0("ML and kriging: ",round(i/nrow(model_data)*100,2),"%"))
+    print(paste0("ML and kriging progress: ",round(i/nrow(model_data)*100,2),"%"))
   }
   
   

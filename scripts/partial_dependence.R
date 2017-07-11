@@ -25,8 +25,8 @@ partial_dependence <- function(model_data,var_imp_overall) {
   knn_fit <- train.kknn(y~., model_data, ks = 5, distance = 0.25, kernel = "triangular")
   
   set.seed(1)
-  gbm_fit <- gbm(y~., data=model_data, distribution="gaussian", n.trees=100,
-                 interaction.depth=5, n.minobsinnode = 10, shrinkage=0.1,
+  gbm_fit <- gbm(y~., data=train, distribution="gaussian", n.trees=439,
+                 interaction.depth=15, n.minobsinnode = 14, shrinkage=0.0671,
                  verbose=F,keep.data=F)
   
   set.seed(1)
@@ -63,23 +63,23 @@ partial_dependence <- function(model_data,var_imp_overall) {
     
     var_pdp[,1] <- sort(unique(model_data[,varnames[j]]))
     colnames(var_pdp) <- c("x",names(model_fits))
-    
-    for (i in 1:length(model_fits)){
       
-      # gmb requires "n.trees" so is done separately of the other models
-      if(class(model_fits[[i]])=="gbm"){
-        hold = ice(object=model_fits[[i]], X = X, y = y, predictor = varnames[j], frac_to_build = 1, 
-                   predictfcn = function(object, newdata){predict(object, newdata,n.trees=100)})
+      for (i in 1:length(model_fits)){
         
-        var_pdp[,i+1] = hold$pdp # extract partial dependence
-      }else{
-      
-      hold = ice(object=model_fits[[i]], X = X, y = y, predictor = varnames[j], frac_to_build = 1, 
-                 predictfcn = function(object, newdata){predict(object, newdata)})
-      
-      var_pdp[,i+1] = hold$pdp # extract partial dependence
+        # gmb requires "n.trees" so is done separately of the other models
+        if(class(model_fits[[i]])=="gbm"){
+          hold = ice(object=model_fits[[i]], X = X, y = y, predictor = varnames[j], frac_to_build = 1, 
+                     predictfcn = function(object, newdata){predict(object, newdata, n.trees=439)})
+          
+          var_pdp[,i+1] = hold$pdp # extract partial dependence
+        }else{
+          
+          hold = ice(object=model_fits[[i]], X = X, y = y, predictor = varnames[j], frac_to_build = 1, 
+                     predictfcn = function(object, newdata){predict(object, newdata)})
+          
+          var_pdp[,i+1] = hold$pdp # extract partial dependence
+        }
       }
-    }
     
     # clean up and add to list
     var_pdp_long <- data.frame(var_pdp) %>%
@@ -91,8 +91,7 @@ partial_dependence <- function(model_data,var_imp_overall) {
     
   }
   
-  pdp_combined_df <- do.call("rbind", pdp_combined) %>%
-    mutate(variable = factor(variable, levels = levels))
+  pdp_combined_df <- do.call("rbind", pdp_combined) 
   
   return(pdp_combined_df)
 }

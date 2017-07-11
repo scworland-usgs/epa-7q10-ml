@@ -25,7 +25,11 @@ stack_models <- function(cv_preds) {
   cubist_bounds <-  list(committees = c(1L,100L), 
                          neighbors = c(0L,9L))
   
-  stack_train <- bayes_optim_caret(cv_preds,'cubist',cubist_bounds,iter=5,acq = "ei")
+  stack_train <-  bayes_optim_caret(data=cv_preds,
+                                    method='cubist',
+                                    bounds=cubist_bounds,
+                                    iter=15,
+                                    kappa=0.5)
   
   ## tuned hyperparameters
   params <- data.frame(stack_train$Best_Par) %>% 
@@ -61,6 +65,7 @@ stack_models <- function(cv_preds) {
   
   # add stacked predictions to to ml_preds. meta_cubist==stacked model
   all_preds <- select(cv_preds, -med,-mean)
+  names(all_preds)[1] <- "obs"
   all_preds$meta_model <- stack_preds
   
   return(all_preds)

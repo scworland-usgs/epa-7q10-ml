@@ -2,17 +2,20 @@
 var_imp <- function(model_data) {
   
   library(caret)
+  library(reshape2)
   
   ## leave one out CV
   ctrl <- trainControl(method = "LOOCV")
   
+  print("Started building models...")
+  
   ## random forest
-  rf.grid <- data.frame(mtry=90)
+  rf.grid <- data.frame(mtry=116)
   rf.fit <- train(y~., data=model_data,
                   trControl=ctrl,
                   tuneGrid=rf.grid,
                   importance=T,
-                  ntree=200,
+                  ntree=500,
                   method='rf')
   
   rf.imp <- varImp(rf.fit)$importance %>% 
@@ -22,8 +25,8 @@ var_imp <- function(model_data) {
   print("completed random forest (model 1/6)")
   
   ## GBM
-  gbm.grid <- data.frame(n.trees=100, interaction.depth=5, 
-                         n.minobsinnode = 10, shrinkage=0.1)
+  gbm.grid <- data.frame(n.trees=439, interaction.depth=15, 
+                         n.minobsinnode = 14, shrinkage=0.0671)
   
   gbm.fit <- train(y~., data=model_data,
                    trControl=ctrl,
@@ -39,8 +42,8 @@ var_imp <- function(model_data) {
   print("completed gradient boosting machine (model 2/6)")
   
   ## kknn fit
-  knn.grid <-  expand.grid(kmax=7, distance = 0.25,
-                           kernel = "optimal")
+  knn.grid <-  expand.grid(kmax=5, distance = 0.25,
+                           kernel ="triangular")
   
   knn.fit <- train(y~., data=model_data,
                    method = "kknn",
@@ -55,7 +58,7 @@ var_imp <- function(model_data) {
   print("completed k-nearest neighbors (model 3/6)")
   
   ## elastic net
-  glmnet.grid <-  expand.grid(alpha=0.8,lambda=0.193)
+  glmnet.grid <- expand.grid(alpha=0,lambda=1.3741)
   glmnet.fit <- train(y~., data=model_data,
                       tuneGrid=glmnet.grid,
                       method='glmnet')
@@ -67,8 +70,8 @@ var_imp <- function(model_data) {
   print("completed elastic net (model 4/6)")
   
   ## cubist
-  cubist.grid <-  expand.grid(committees=10, 
-                              neighbors=9)
+  cubist.grid <-  expand.grid(committees=50, 
+                              neighbors=8)
   
   cubist.fit <- train(y~., data=model_data,
                       trControl=ctrl,

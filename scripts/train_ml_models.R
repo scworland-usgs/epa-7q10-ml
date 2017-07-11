@@ -28,23 +28,27 @@ train_ml_models <- function(model_data,data_full) {
   rf_bounds <-  list(mtry = c(2L,120L))
   
   ## Bayesian optimization 
-  rf_params <- bayes_optim_caret(model_data,'rf',rf_bounds,iter=15,acq = "ucb")
+  rf_params <- bayes_optim_caret(data=model_data,
+                                 method='rf',
+                                 bounds=rf_bounds,
+                                 iter=15,
+                                 kappa=0.5)
   
   print(rf_params$Best_Par)
   
   # gradient boosting machine ----------------------------
   
-  # http://xgboost.readthedocs.io/en/latest/parameter.html
-  gbm_bounds <- list(nrounds = c(1L,1000L),
-                     max_depth = c(1L,20L),
-                     eta = c(0,1),
-                     gamma=c(0,100),
-                     colsample_bytree=c(0.1,1),
-                     min_child_weight=c(0L,20L),
-                     subsample=c(0,1))
+  gbm_bounds <- list(n.trees = c(1L,1000L),
+                     interaction.depth = c(1L,30L),
+                     shrinkage = c(0,1),
+                     n.minobsinnode=c(1L,50L))
   
   ## Bayesian optimization 
-  gbm_params <- bayes_optim_caret(model_data,'xgbTree',gbm_bounds,iter=15,acq = "ucb")
+  gbm_params <- bayes_optim_caret(data=model_data,
+                                  method='gbm',
+                                  bounds=gbm_bounds,
+                                  iter=15,
+                                  kappa=0.5)
   
   print(gbm_params$Best_Par)
   
@@ -53,16 +57,24 @@ train_ml_models <- function(model_data,data_full) {
   cubist_bounds <-  list(committees = c(1L,100L), # 3.5 hours
                          neighbors = c(0L,9L))
   
-  cubist_params <- bayes_optim_caret(model_data,'cubist',cubist_bounds,iter=15,acq = "ucb")
+  cubist_params <- bayes_optim_caret(data=model_data,
+                                     method='cubist',
+                                     bounds=cubist_bounds,
+                                     iter=15,
+                                     kappa=0.5)
 
   print(cubist_params$Best_Par)
   
   # support vector machine with Gaussian kernel --------------------
-  # run one more with larger C boundary
+
   svmg_bounds <-  list(C = c(1,5),
                        sigma = c(0,0.1))
   
-  svmg_params <- bayes_optim_caret(model_data,'svmRadial',svmg_bounds,iter=15,acq='ei')
+  svmg_params <- bayes_optim_caret(model_data,
+                                   'svmRadial',
+                                   svmg_bounds,
+                                   iter=15,
+                                   kappa=0.5)
   
   print(svmg_params$Best_Par)
   
@@ -72,17 +84,20 @@ train_ml_models <- function(model_data,data_full) {
                        degree = c(1L,3L),
                        scale = c(0,0.1))
   
-  svmp_params <- bayes_optim_caret(model_data,'svmPoly',svmp_bounds,iter=15,acq = "ucb")
+  svmp_params <- bayes_optim_caret(data=model_data,
+                                   method='svmPoly',
+                                   bounds=svmp_bounds,
+                                   iter=15,
+                                   kappa=0.5)
   
   print(svmp_params$Best_Par)
   
   # k-nearest neighbors -------------------------------------------
   
-  # kernel = c("triangular", "rectangular", 
-  #            "epanechnikov", "optimal")
   kknn_grid <- expand.grid(kmax=c(4,6,8,10,12), # max number of neighbors
                            distance = c(0.25,0.5,1),
-                           kernel = c("triangular","optimal"))
+                           kernel = c("triangular", "rectangular", 
+                                      "epanechnikov", "optimal"))
   
   kknn_params <- train(y~., data=model_data,
                        trControl = trainControl(method = 'LOOCV', search = 'grid'),
@@ -96,7 +111,11 @@ train_ml_models <- function(model_data,data_full) {
   enet_bounds <-  list(alpha = c(0,1),
                        lambda = c(0,1.5))
   
-  enet_params <- bayes_optim_caret(model_data,'glmnet',enet_bounds,iter=30,acq = "ucb")
+  enet_params <- bayes_optim_caret(data=model_data,
+                                   method='glmnet',
+                                   bounds=enet_bounds,
+                                   iter=15,
+                                   kappa = 0.2)
   
   print(enet_params$Best_Par)
   
@@ -114,7 +133,7 @@ train_ml_models <- function(model_data,data_full) {
                     cubist_params, 
                     svmg_params,
                     svmp_params,
-                    kkkn_params,
+                    kkn_params,
                     enet_params)
   
   return(ml_params)
