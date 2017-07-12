@@ -75,8 +75,10 @@ make_plots <- function(all_preds,model_error,var_imp_overall,pdp_data) {
     theme_bw() +
     coord_flip()
   
-  p8.2 <- ggplot(pdp_data, aes(x,value,color=model)) + 
-    facet_wrap(~variable, scales="free", ncol=2) +
+  pdp_data2 <- left_join(pdp_data,var_imp_overall, by="variable") 
+  
+  p8.2 <- ggplot(pdp_data2, aes(x,value,color=model)) + 
+    facet_wrap(~reorder(variable,-imp), scales="free", ncol=2) +
     geom_line() + theme_bw() + 
     labs(x="scaled predictor value",y="predicted ln(7Q10/area)") +
     theme(axis.ticks=element_blank(), axis.text=element_blank(),

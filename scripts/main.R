@@ -134,21 +134,6 @@ source("scripts/partial_dependence.R")
 var_imp_overall <- var_imp(model_data)
 pdp_data <- partial_dependence(model_data,var_imp_overall)
 
-pdp_combined_df <- do.call("rbind", pdp_combined) %>%
-  mutate(variable = factor(variable, levels = levels))
-
-#------------------------------------------------------------------------------
-
-# MONTE-CARLO ANALYSIS 
-source("scripts/monte_carlo.R")
-
-## The 'monte_carlo.R' script contains the monte_carlo() R function. The full
-## monte carlo analysis takes several days to run, so we only inlcude a fully
-## functioning example here for two models. It is enough information to expand
-## to the full analysis described in the paper if a user wishes to do so.
-
-monte_carlo_data <- monte_carlo(model_data)
-
 #------------------------------------------------------------------------------
 
 # GENERATE MAJOR PLOTS FROM PAPER

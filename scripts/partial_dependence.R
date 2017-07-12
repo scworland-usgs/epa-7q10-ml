@@ -25,7 +25,7 @@ partial_dependence <- function(model_data,var_imp_overall) {
   knn_fit <- train.kknn(y~., model_data, ks = 5, distance = 0.25, kernel = "triangular")
   
   set.seed(1)
-  gbm_fit <- gbm(y~., data=train, distribution="gaussian", n.trees=439,
+  gbm_fit <- gbm(y~., data=model_data, distribution="gaussian", n.trees=439,
                  interaction.depth=15, n.minobsinnode = 14, shrinkage=0.0671,
                  verbose=F,keep.data=F)
   
