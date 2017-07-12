@@ -24,7 +24,7 @@ This readme file is intended to serve as a navigation guide for the model archiv
 \end{center}
 \end{figure}
 
-The arrows should be interpreted as "output dependency flow". The steps should be run in roughly clockwise order. Each primary step can be run directly with "main.R" file via custom R functions that have the same name as the othe R files in the figure above. Solid lines indicate primary functions that are sourced directly within "main.R" file, and the dashed lines indicate secondary functions that are sourced by the primary functions. For example, the "train_ml_models.R" file is sourced and run directly by "main.R", but "train_ml_models.R" is depedent on "bayes_optim_caret.R". The idea behind structuring the model archive in this way is that output dependencies can be traced directly back to the input data csv file titled "lowflow_sc_ga_al_gagesII_2015.csv". The steps from the data file to the output should be completely reproducible^[With the exception of possible stochastic differences in model training. This is discussed in more detail in lower sections] if functions are run in sequential order.
+The arrows should be interpreted as "output dependency flow". The steps should be run in roughly clockwise order. Each primary step can be run directly with "main.R" file via custom R functions that have the same name as the othe R files in the figure above. Solid lines indicate primary functions that are sourced directly within "main.R" file, and the dashed lines indicate secondary functions that are sourced by the primary functions. For example, the "train_ml_models.R" file is sourced and run directly by "main.R", but "train_ml_models.R" is depedent on "bayes_optim_caret.R". The idea behind structuring the model archive in this way is that output dependencies can be traced directly back to the input data csv file titled "lowflow_sc_ga_al_gagesII_2015.csv". The steps from the data file to the output should be completely reproducible^[With the exception of possible stochastic differences in model training. This is discussed in more detail in lower sections] if functions are run in sequential order. The monte_carlo.R script is greyed out because it was dropped from the analysis.
 
 \newpage
 
@@ -95,7 +95,7 @@ all_preds <- read.csv("data/all_preds.csv")
 model_error <- fit_metrics(all_preds,data_full)
 ```
 
-The final steps for this truncated version of the analysis is to calcualte variable importance, partial dependence, and make some plots. The paper includes a monte carlo analysis. I do not suggest you try to run the full monte carlo^[The monte carlo anaylsis requires 800 models for all 6 model types using loo-cv cross validation = over 100,000 models], but the script is included for inspection. 
+The final steps for this truncated version of the analysis is to calcualte variable importance, partial dependence, and make some plots. 
 
 \vspace{8pt}
 
@@ -109,7 +109,7 @@ source("scripts/partial_dependence.R")
 pdp_data <- partial_dependence(model_data,var_imp_overall)
 ```
 
-Note that the variable importance and partial dependence don't actually require direct inputs from the other functions above. However, the model selections for the variable importance are based off pieces of the earlier analysis. The very last step is to create plots from the paper (skip the monte-carlo for now):
+Note that the variable importance and partial dependence don't actually require direct inputs from the other functions above. However, the model selections for the variable importance are based off pieces of the earlier analysis. The very last step is to create plots from the paper:
 
 \vspace{8pt}
 
@@ -131,6 +131,58 @@ plots$partial_dep
 ## Extended analysis
 
 This section includes more information about determining the hyperparameters of the models and the monte carlo analysis. 
+
+### Description of train_ml_models()
+
+The process for the machine learning models is conceptually similar to the baseline models, but is much more computationally expensive. This basic pipeline involves (1) generating a bunch of points in hyperparameters and RMSE space to be used as substrate for a gaussian process model, and (2) use bayesian optimization to estimate the functional relationship between the hyperparameters and the RMSE. The gaussian process model attempts to discover a function that relates values of the hyperparameters to an output, in this case, the RMSE. Then an optimization function is used to seek for the combination of parameters where the function is maximized. Theoretically this should result in a set of optimal hyperparameters for a given model. Below is an example using a support vector machine (SVM) model. There are only two hyperparameters for a SVM model, the effect that the large residuals have on the regression is controlled by the \textit{cost (C)} and the standard deviation of the Gaussian kernel is controlled by \textit{sigma}. We don't know what values to select apriori, so we use the steps above. I have automated this process using a custom function that is a wrapper around both the `train` function from the caret package and the `BayesianOptimization` function from the rBayesianOptimization package.
+
+\vspace{8pt}
+
+```{r,eval=F}
+library(caret)
+source('scripts/bayes_optim_caret.R')
+
+# list of parameter boundaries
+svmg_bounds <-  list(C = c(1,5),
+                     sigma = c(0,1))
+
+# pass to custom function
+svmg_params <- bayes_optim_caret(model_data,'svmRadial',svmg_bounds,iter=10,acq='ucb')
+```
+
+```{r,echo=F,eval=F}
+seed <- svmg_params$History %>%
+  mutate(iter_type = ifelse(Round>10,"bayes opt","random seed")) %>%
+  filter(iter_type=="random seed")
+
+opt <- svmg_params$History %>%
+  mutate(iter_type = ifelse(Round>10,"bayes opt","random seed")) %>%
+  filter(iter_type=="bayes opt") 
+
+ggplot() +
+  geom_segment(data=opt,
+               aes(x=C,y=sigma,
+                   xend=c(tail(C, n=-1), NA),
+                   yend=c(tail(sigma, n=-1), NA),
+                   #alpha=Round,
+                   color=Value),
+               arrow=arrow(length=unit(0.2,"cm"))) +
+  geom_point(data=seed,aes(x=C,y=sigma,fill=Value),shape=21) +
+  scale_alpha(range=c(0.1,0.8),guide=F) +
+  theme_bw() +
+  scale_fill_viridis() +
+  scale_color_viridis(guide=F)
+```
+
+We can easily plot the parameter search for the SVM as it only has two parameters. The algorithm first seeds the search space with 10 random RMSE values resulting from different combinations of parameters. These are represented as the colored points below. The value is the negative RMSE in log space. We take the negation of the RMSE because the algorithm seeks to maximize the function. The line segments and the arrows represent the iterations of the Gaussian process model, with the color of the line indicating the resulting -RMSE for each iteration. 
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=5in]{~/Documents/Ungaged basins/epa_7q10_ml/figures/svm_search.png}
+\end{center}
+\end{figure}
+
+\newpage
 
 ### Description of train_bl_models()
 
@@ -208,67 +260,4 @@ A similar process is done for the region of influenced censored regression model
     roi_tune_error[i] <- sqrt(mean((fit$obs-fit$pred)^2,na.rm=T))
   }
 ```
-
-### Description of train_ml_models()
-
-The process for the machine learning models is conceptually similar to the baseline models, but is much more computationally expensive. This basic pipeline involves (1) generating a bunch of points in hyperparameters and RMSE space to be used as substrate for a gaussian process model, and (2) use bayesian optimization to estimate the functional relationship between the hyperparameters and the RMSE. The gaussian process model attempts to discover a function that relates values of the hyperparameters to an output, in this case, the RMSE. Then an optimization function is used to seek for the combination of parameters where the function is maximized. Theoretically this should result in a set of optimal hyperparameters for a given model. Below is an example using a support vector machine (SVM) model. There are only two hyperparameters for a SVM model, the effect that the large residuals have on the regression is controlled by the \textit{cost (C)} and the standard deviation of the Gaussian kernel is controlled by \textit{sigma}. We don't know what values to select apriori, so we use the steps above. I have automated this process using a custom function that is a wrapper around both the `train` function from the caret package and the `BayesianOptimization` function from the rBayesianOptimization package.
-
-\vspace{8pt}
-
-```{r,eval=F}
-library(caret)
-source('scripts/bayes_optim_caret.R')
-
-# list of parameter boundaries
-svmg_bounds <-  list(C = c(1,5),
-                     sigma = c(0,1))
-
-# pass to custom function
-svmg_params <- bayes_optim_caret(model_data,'svmRadial',svmg_bounds,iter=10,acq='ucb')
-```
-
-```{r,echo=F,eval=F}
-seed <- svmg_params$History %>%
-  mutate(iter_type = ifelse(Round>10,"bayes opt","random seed")) %>%
-  filter(iter_type=="random seed")
-
-opt <- svmg_params$History %>%
-  mutate(iter_type = ifelse(Round>10,"bayes opt","random seed")) %>%
-  filter(iter_type=="bayes opt") 
-
-ggplot() +
-  geom_segment(data=opt,
-               aes(x=C,y=sigma,
-                   xend=c(tail(C, n=-1), NA),
-                   yend=c(tail(sigma, n=-1), NA),
-                   #alpha=Round,
-                   color=Value),
-               arrow=arrow(length=unit(0.2,"cm"))) +
-  geom_point(data=seed,aes(x=C,y=sigma,fill=Value),shape=21) +
-  scale_alpha(range=c(0.1,0.8),guide=F) +
-  theme_bw() +
-  scale_fill_viridis() +
-  scale_color_viridis(guide=F)
-```
-
-We can easily plot the parameter search for the SVM as it only has two parameters. The algorithm first seeds the search space with 10 random RMSE values resulting from different combinations of parameters. These are represented as the colored points below. The value is the negative RMSE in log space. We take the negation of the RMSE because the algorithm seeks to maximize the function. The line segments and the arrows represent the iterations of the Gaussian process model, with the color of the line indicating the resulting -RMSE for each iteration. 
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[width=5in]{~/Documents/Ungaged basins/epa_7q10_ml/figures/svm_search.png}
-\end{center}
-\end{figure}
-
-### Description of monte_carlo()
-
-The Monte-Carlo analysis attempts to answer the following questions:  How does the predictive accuracy of a model compare relative to the other models as the amount of training data is increased? And similarly, would prediction accuracy be substantially improved with an increased number of gaged basins (i.e., are the models continuing to improve as we add more training data and is there evidence that installing more stream gages would be beneficial)? The Monte Carlo Analysis presented here can only answer the aforementioned questions relative to this particular dataset and these particular models. This is the algorithmic form of the monte carlo:
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[width=4in]{~/Documents/Ungaged basins/epa_7q10_ml/figures/epa_7q10_algorithm.png}
-\end{center}
-\end{figure}
-
-The "monte_carlo.R" function only completes a partial example using the k-nearest neighbors and null models. The partial analysis only using 10% and 20% of the data, and only repeats each step 10 times. 
-
 
