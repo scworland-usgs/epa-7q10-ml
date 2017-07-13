@@ -1,6 +1,8 @@
 
 make_plots <- function(all_preds,model_error,var_imp_overall,pdp_data) {
   
+  all_preds <- all_preds[,-1] # remove staid
+  
   # turn warnings off for function
   options(warn = -1)
   

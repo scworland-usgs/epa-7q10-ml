@@ -5,14 +5,24 @@
 
 # SETUP AND DATA PREPARATION
 
-## Install all packages required for entire analysis. The libraries needed for 
-## each function are loaded in the function script. 
-install.packages(c("dplyr","reshape2","randomForest","kknn","caret",
-                   "xgboost","kernlab","Cubist","glmnet","devtools","AER",
-                   "leaps","doMC","ICEbox","geoR"))
+# Install all packages required for entire analysis. The libraries needed for 
+# each function are loaded in the function script. 
 
-## install PUBAD package off of github
-devtools::install_github("wfarmer-usgs/PUBAD")
+# add the USGS R repository (https://owi.usgs.gov/R/gran.html) to R profile so 
+# packages will download
+rprofile_path = file.path(Sys.getenv("HOME"), ".Rprofile")
+write('\noptions(repos=c(getOption(\'repos\'),
+      CRAN=\'https://cloud.r-project.org\',
+      USGS=\'https://owi.usgs.gov/R\'))\n',
+      rprofile_path, 
+      append =  TRUE)
+
+pkg_list <- c("dplyr","reshape2","randomForest","kknn","caret",
+              "gbm","kernlab","Cubist","glmnet","devtools","AER",
+              "leaps","doMC","ICEbox","geoR","smwrQW","smwrStats")
+
+install.packages(pkg_list)
+
 
 ## load libraries needed for main.R script
 library(dplyr); library(PUBAD)
@@ -22,7 +32,8 @@ setwd("~/Documents/Ungaged basins/epa_7q10_ml")
 
 ## Load csv file: note, data should be in a "data" folder in working directory
 data_full <- read.csv("data/lowflow_sc_ga_al_gagesII_2015.csv",header=T,na.strings = "-999") %>%
-  setNames(tolower(names(.))) # make column names lower case
+  setNames(tolower(names(.))) %>% # make column names lower case
+  mutate(staid = paste0("0",staid)) # add leading zero
 
 ## Transform 7Q10 response variable
 area <- data_full$drain_sqkm
@@ -38,7 +49,7 @@ expVars <- data.frame(gages = data_full$staid) %>%
 ## create model data using clean basin chars
 model_data <- expVars$cleanBCs %>% # start with basin chars
   mutate(CLASS = as.integer(as.factor(CLASS))) %>% # change class to integer
-  mutate_each(funs(as.numeric)) %>% # make everything numeric
+  mutate_all(funs(as.numeric)) %>% # make everything numeric
   scale() %>% # convert to z-score: (x-mu)/sigma
   as.data.frame() %>% # make data frame
   setNames(tolower(names(.))) %>% # make sure colname are lower case
@@ -51,7 +62,7 @@ model_data <- expVars$cleanBCs %>% # start with basin chars
 source("scripts/train_bl_models.R")
 
 ## The 'train_bl_models.R' script contains the train_bl_models() R function.
-## the function takes only one inputs, data_full, and finds the optimal 
+## the function takes only one input, data_full, and finds the optimal 
 ## hyperparameters for two censored regression models and one kriging 
 ## model. The unit area null model does not have parameters and the predictions are
 ## calculated in the 'gather_cv_predictions()' function. The Kriging model also uses 

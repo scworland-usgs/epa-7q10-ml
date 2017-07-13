@@ -1,6 +1,8 @@
 
 fit_metrics <- function(all_preds,data_full) {
   
+  all_preds <- all_preds[,-1] # remove staid
+  
   ## custom function to calcualate fit metrics
   fitmets <- function(df,model_name="model",data_full) {
     
