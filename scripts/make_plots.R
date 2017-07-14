@@ -20,8 +20,8 @@ make_plots <- function(all_preds,model_error,var_imp_overall,pdp_data) {
     geom_point(color="black",alpha=1) +
     scale_fill_manual(values=c("darkgreen","mediumpurple4")) +
     labs(x="RMSE (cubic feet/second)",y="Unit Area RMSE (feet/year)") +
-    scale_x_continuous(limits = c(10,85),breaks=seq(10,85,10)) +
-    scale_y_continuous(limits = c(0.1,0.30)) + 
+    scale_x_continuous(limits = c(15,85),breaks=seq(10,85,10)) +
+    scale_y_continuous(limits = c(0.123,0.37)) + 
     theme(legend.position="top")
   
   ## predicted vs observed (figure 5)

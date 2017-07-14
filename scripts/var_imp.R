@@ -1,6 +1,8 @@
 
 var_imp <- function(model_data) {
   
+  print("This function might take > 15 minutes")
+  
   library(caret)
   library(reshape2)
   

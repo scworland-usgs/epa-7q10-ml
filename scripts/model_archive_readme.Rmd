@@ -20,7 +20,7 @@ knitr::opts_knit$set(root.dir = "~/Documents/Ungaged basins/epa_7q10_ml")
 
 ## Introduction
 
-This readme file is intended to serve as a navigation guide for the data release associated with the paper (citation information). The basic file contents and dependencies look like:
+This readme file is intended to serve as a navigation guide for the data release associated with the paper (Worland, Farmer, and Kiang. 2017. "Improving predictions of hydrological lowflow indices in ungaged basins using machine learning", under review, Environmental Modeling and Software). The basic file contents and dependencies look like:
 
 \begin{figure}[ht]
 \begin{center}
@@ -80,7 +80,7 @@ The arrows should be interpreted as "output dependency flow". The steps should b
 
 ## Quick start
 
-Although all the scripts are sourced by the "main.R"" script, most of them need not be run to recreate a bulk of the important results. The quickest way to get started is by opening the "main.R" script and setting up the work environment. The code below can be copy and pasted or run directly from the "main.R"" file. This includes installing pacakges and setting the working directory (note that the working directory is relative to where the files are stored, so a user needs to set their working directory after the files are downloaded).
+Although all the scripts are sourced by the "main.R"" script, most of them need not be run to recreate a bulk of the important results. This is because several of the function, especially the ones that require hyperparameter tuning, are very computationally heavy and we have provided the output from those functions as a csv file. The quickest way to get started is by opening the "main.R" script and setting up the work environment. The code below can be copy and pasted or run directly from the "main.R" file. This includes installing pacakges and setting the working directory (note that the working directory is relative to where the files are stored, so a user needs to set their working directory after the files are downloaded).
 
 \vspace{8pt}
 
@@ -109,7 +109,7 @@ devtools::install_github("wfarmer-usgs/PUBAD")
 # load libraries needed for main.R script
 library(dplyr); library(PUBAD)
 
-# set working directory
+# update working directory below 
 setwd("~/set/working/directoy")
 ```
 

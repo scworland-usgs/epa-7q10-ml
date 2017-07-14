@@ -1,11 +1,10 @@
 
 partial_dependence <- function(model_data,var_imp_overall) {
   
-  input <- menu(c("yes", "no"), title="Are you sure you want to run this function? It will take > 5-10 minutes.")
+  # turn warnings off for function
+  options(warn = -1)
   
-  if(input==2){
-    stop("User chose to exit function because due to runtime length...")
-  }
+  print("This function might take > 15 minutes")
   
   library(dplyr)
   library(reshape2)
@@ -94,6 +93,9 @@ partial_dependence <- function(model_data,var_imp_overall) {
   pdp_combined_df <- do.call("rbind", pdp_combined) 
   
   return(pdp_combined_df)
+  
+  # turn warnings back on
+  options(warn = 0)
 }
 
 

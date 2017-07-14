@@ -102,7 +102,6 @@ source("scripts/gather_cv_predictions.R")
 ## during the training step), but it allows a user to verify that the inputs 
 ## shown in the paper recreate the correct error values. 
 
-#cv_preds <- gather_cv_predictions(model_data,data_full)
 cv_preds <- read.csv("data/cv_preds.csv")
 
 #------------------------------------------------------------------------------
