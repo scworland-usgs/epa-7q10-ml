@@ -8,6 +8,7 @@ fit_metrics <- function(all_preds,data_full) {
     
     est <- df[,1] # estimated
     obs <- df[,2] # observed
+    N <- length(obs)
     
     ### convert predictions to unit area before calculating
     ### unit area RMSE
