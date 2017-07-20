@@ -1,18 +1,19 @@
 
-make_plots <- function(all_preds,model_error,var_imp_overall,pdp_data) {
+make_plots <- function(all_preds,model_error,var_imp_overall,pdp_data,model_data) {
   
   all_preds <- all_preds[,-1] # remove staid
   
   # turn warnings off for function
   options(warn = -1)
   
-  if(!require(gridExtra)){            
-    install.packages("gridExtra")      
+  if(!require(cowplot)){            
+    install.packages("cowplot")      
   }
   
   library(ggrepel)
   library(viridis)
-  library(gridExtra)
+  library(cowplot)
+  library(reshape2)
   
   ## rmse vs unit rmse (figure 4)
   plot_error <- model_error %>%
@@ -38,6 +39,9 @@ make_plots <- function(all_preds,model_error,var_imp_overall,pdp_data) {
   ## predicted vs observed (figure 5)
   plot_error <- model_error %>%
     dplyr::mutate(models=row.names(.),
+                  models2 = c("null","OK","full tobit","roi tobit",
+                             "RF","KKNN","GBM","SVMP","SVMG",
+                             "M5-cubist", "elastic-net","meta cubist"),
                   type = c(rep("baseline",4),
                            rep("machine learning",8)))
   
@@ -46,10 +50,10 @@ make_plots <- function(all_preds,model_error,var_imp_overall,pdp_data) {
     group_by(models) %>%
     ungroup() %>%
     arrange(rmse) %>%
-    dplyr::mutate(models=factor(models,unique(models),ordered=T)) 
+    dplyr::mutate(models2=factor(models2,unique(models2),ordered=T)) 
   
   p5 <- ggplot(pred_obs_plot,aes(obs,value,fill=type)) + geom_point(size=1.5,alpha=0.7,shape=21) +
-    facet_wrap(~models, ncol=4) + #scale_color_viridis() +
+    facet_wrap(~models2, ncol=4) + #scale_color_viridis() +
     geom_abline(slope=1,intercept=0, color="black", size=0.5,linetype="dashed") + theme_bw(base_size=10) +
     scale_x_sqrt(limits=c(0,1500),breaks=c(0,5,75,250,500,750,1000,1250,1500),
                  labels=c("",5,"",250,"",750,"",1000,"")) + 
@@ -96,11 +100,16 @@ make_plots <- function(all_preds,model_error,var_imp_overall,pdp_data) {
     geom_bar(stat="identity",width=0.05,color="black") + 
     geom_point(fill="white",size=2,color="black",shape=21) + 
     labs(x=NULL,y="Variable Importance") +
+    scale_x_discrete(expand=c(0.08, 0.08)) +
     ggtitle("\n\n\n") +
     theme_bw() +
     coord_flip()
   
-  pdp_data2 <- left_join(pdp_data,var_imp_overall, by="variable") 
+  pdp_data2 <- left_join(pdp_data,var_imp_overall, by="variable") %>%
+    mutate(model = as.character(model)) %>%
+    mutate(model=ifelse(model=="gbm","GBM",
+                        ifelse(model=="rf","RF", 
+                               ifelse(model=="svmp","SVMP",model))))
   
   p8.2 <- ggplot(pdp_data2, aes(x,value,color=model)) + 
     facet_wrap(~reorder(variable,-imp), scales="free", ncol=2) +
@@ -114,8 +123,25 @@ make_plots <- function(all_preds,model_error,var_imp_overall,pdp_data) {
           legend.justification=c(0, -0.7),
           legend.direction="horizontal") 
   
-  # use this for paper
-  # p8 <- grid.arrange(p8.1,p8.2,ncol=2)
+  var_dens <- model_data %>%
+    select(one_of(var_imp_overall$variable)) %>%
+    melt() %>%
+    left_join(var_imp_overall, by="variable") 
+  
+  # library(ggjoy)
+  # p8.3 <- ggplot(var_dens, aes(x = value, y = reorder(variable, imp))) + 
+  #   geom_joy(rel_min_height = 0.02,scale = 0.75,alpha=0.5) +
+  #   scale_y_discrete(expand=c(0.02, 0.7)) +
+  #   xlim(c(-3,3)) +
+  #   theme_bw() +
+  #   ggtitle("\n\n\n") +
+  #   labs(x="z-score",y="") +
+  #   theme(axis.ticks.y=element_blank(), 
+  #         axis.text.y=element_blank(),
+  #         panel.grid.major = element_blank(), 
+  #         panel.grid.minor = element_blank())
+  
+  plot_grid(p8.1,p8.2, align = "h", nrow = 1, rel_widths = c(0.45,0.55))
   
   plots <- list('rmse_vs_unitrmse'=p4,
                 'pred_vs_obs'=p5,

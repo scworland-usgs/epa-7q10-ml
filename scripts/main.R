@@ -152,7 +152,7 @@ source("scripts/make_plots.R")
 ## The 'make_plots.R' R script contains the make_plots() R function that 
 ## recreates plots from the paper
 
-plots <- make_plots(all_preds,model_error,var_imp_overall,pdp_data)
+plots <- make_plots(all_preds,model_error,var_imp_overall,pdp_data,model_data)
 
 ## access the plots
 plots$rmse_vs_unitrmse
