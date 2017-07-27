@@ -31,7 +31,11 @@ library(dplyr); library(PUBAD)
 setwd("~/Documents/Ungaged basins/epa_7q10_ml")
 
 ## Load csv file: note, data should be in a "data" folder in working directory
-data_full <- read.csv("data/lowflow_sc_ga_al_gagesII_2015.csv",header=T,na.strings = "-999") %>%
+# data_full <- read.csv("data/lowflow_sc_ga_al_gagesII_2015.csv",header=T,na.strings = "-999") %>%
+#   setNames(tolower(names(.))) %>% # make column names lower case
+#   mutate(staid = paste0("0",staid)) # add leading zero
+
+data_full <- read.csv("data/southern_plains_7Q10_gagesII.csv",header=T,na.strings = "-999") %>%
   setNames(tolower(names(.))) %>% # make column names lower case
   mutate(staid = paste0("0",staid)) # add leading zero
 
@@ -128,7 +132,11 @@ source("scripts/fit_metrics.R")
 ## the RMSE, unit area RMSE, median % error, and Nash-Sutcliffe coefficient. The
 ## input is the cross validated predictions from all the models and data_full
 
-model_error <- fit_metrics(all_preds,data_full)
+model_error <- fit_metrics(all_preds,data_full) 
+
+error <- model_error %>%
+  mutate(models=row.names(.)) %>%
+  arrange(rmse)
 
 #------------------------------------------------------------------------------
 

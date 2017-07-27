@@ -20,7 +20,7 @@ knitr::opts_knit$set(root.dir = "~/Documents/Ungaged basins/epa_7q10_ml")
 
 ## Introduction
 
-This readme file is intended to serve as a navigation guide for the data release associated with the paper (Worland, Farmer, and Kiang. 2017. "Improving predictions of hydrological lowflow indices in ungaged basins using machine learning", under review, Environmental Modeling and Software). The basic file contents and dependencies look like:
+This readme file is intended to serve as a navigation guide for the data release associated with the paper (Worland and other, in review). The basic file contents and dependencies look like:
 
 \begin{figure}[ht]
 \begin{center}
@@ -28,9 +28,9 @@ This readme file is intended to serve as a navigation guide for the data release
 \end{center}
 \end{figure}
 
-The arrows should be interpreted as "output dependency flow". The steps should be run in roughly clockwise order. Each primary step can be run directly with "main.R" file via custom R functions that have the same name as the othe R files in the figure above. Solid lines indicate primary functions that are sourced directly within the "main.R" file, and the dashed lines indicate other secondary functions that are sourced by the primary functions. For example, the "train_ml_models.R" file is sourced and run directly by "main.R", but "train_ml_models.R" is depedent on "bayes_optim_caret.R". The idea behind structuring the model archive in this way is that output dependencies (i.e., outputs of the functions) can be traced directly back to the input data csv file titled "lowflow_sc_ga_al_gagesII_2015.csv". The steps from the data file to the output should be completely reproducible^[With the exception of possible stochastic differences in model training. This is discussed in more detail in lower sections] if functions are run in sequential order. The output of "stack_models.R" is a dataframe. This dataframe is included in the data release as "all_preds.csv". The monte_carlo.R script is greyed out because it was dropped from the analysis. Why it is included in the diagram is described in the table below.
+The arrows should be interpreted as "output dependency flow". The steps should be run in roughly clockwise order. Each primary step can be run directly with "main.R" file via custom R functions that have the same name as the other R files in the figure above. Solid lines indicate primary functions that are sourced directly within the "main.R" file, and the dashed lines indicate other secondary functions that are sourced by the primary functions. For example, the "train_ml_models.R" file is sourced and run directly by "main.R", but "train_ml_models.R" is depedent on "bayes_optim_caret.R". The idea behind structuring the model archive in this way is that output dependencies (i.e. outputs of the functions) can be traced directly back to the input data comma-separated value file titled "lowflow_sc_ga_al_gagesII_2015.csv". The steps from the data file to the output should be completely reproducible^[With the exception of possible stochastic differences in model training. This is discussed in more detail in lower sections] if functions are run in sequential order. The output of "stack_models.R" is a dataframe. This dataframe is included in the data release as "all_preds.csv". The "monte_carlo.R" script is greyed out because it was dropped from the analysis. Why it is included in the diagram is described in the table below.
 
-**Usage disclaimer:** Although this software has been used by the USGS, no warranty, expressed or implied, is made by the USGS or the U.S. Government as to the accuracy and functioning of the program and related program material nor shall the fact of distribution constitute any such warranty, and no responsibility is assumed by the USGS in connection therewith.
+**Usage disclaimer:** Although this software has been used by the U.S. Geological Survey (USGS), no warranty, expressed or implied, is made by the USGS or the U.S. Government as to the accuracy and functioning of the program and related program material nor shall the fact of distribution constitute any such warranty, and no responsibility is assumed by the USGS in connection therewith.
 
 **Contact:** Scott Worland, U.S. Geological Survey, Lower Mississippi-Gulf Water Science Center, 615-289-8319
 
@@ -48,11 +48,11 @@ The arrows should be interpreted as "output dependency flow". The steps should b
 		File name & File description & Dependencies \\
 		\hline  \\[-2mm]
 		\\ 
-		\parbox[t]{1cm}{lowflow\_sc\_ga\_al \\ \_gagesII\_2015.csv} & \parbox[t]{4.5cm}{Main input datafile. Contains station ID, 7Q10 values, and basin characteristics.} & no dependencies  \\
+		\parbox[t]{1cm}{lowflow\_sc\_ga\_al \\ \_gagesII\_2015.csv} & \parbox[t]{4.5cm}{Main input datafile. Contains station ID, 7Q10 values, and basin characteristics.} & none \\
 		\\
-		train\_ml\_models.R & \parbox[t]{4.5cm}{R script that sources primary and secondary function for analysis. This is the only R script that must be opened to run the analysis.} & bayes\_optim\_caret.R  \\
+		main.R & \parbox[t]{4.5cm}{R script that sources primary and secondary function for analysis. This is the only R script that must be opened to run the analysis.} & all other R files  \\
 		\\
-		train\_ml\_models.R & \parbox[t]{4.5cm}{Contains R function of same name that uses bayesian optimization to locate optimal hyperparameters for the machine learning models.} & bayes\_optim\_caret.R  \\
+		train\_ml\_models.R & \parbox[t]{4.5cm}{Contains R function of same name that uses bayesian optimization to locate optimal hyperparameters for the machine-learning models.} & bayes\_optim\_caret.R  \\
 		\\
 		train\_bl\_models.R & \parbox[t]{4.5cm}{Contains R function of same name that uses grid search to locate optimal hyperparameters for baseline regression models.} & \parbox[t]{3.5cm}{lcr\_tobit.R, roi\_lcr\_tobit.R, region\_of\_influence.R} \\
 		\\
@@ -60,19 +60,19 @@ The arrows should be interpreted as "output dependency flow". The steps should b
 		\\
 		roi\_lcr\_tobit.R & \parbox[t]{4.5cm}{Contains R function of same name that calculates cross validated predictions from region of influence left censored Type I tobit regression model.} & region\_of\_influence.R \\
 			\\
-		region\_of\_influence.R & \parbox[t]{4.5cm}{Contains R function of same name that calculated euclidean distances between observations in predictor space.} & none \\
+		region\_of\_influence.R & \parbox[t]{4.5cm}{Contains R function of same name that calculates euclidean distances between observations in predictor space.} & none \\
 		\\
 		gather\_cv\_predictions.R & \parbox[t]{4.5cm}{Contains R function of same name that calculates the cross validated predictions for all models using the optimal hyperparameters.} & \parbox[t]{3.5cm}{ordinary\_kriging.R, lcr\_tobit.R, roi\_lcr\_tobit.R, region\_of\_influence.R}\\
 		\\
 		ordinary\_kriging.R & \parbox[t]{4.5cm}{Contains R function of same name that calculates predicted values using ordinary kriging.} & none\\
 		\\
-		stack\_models.R & \parbox[t]{4.5cm}{Contains R function of same name that ensembles the cross validated predictions from all other models.} & none\\
+		stack\_models.R & \parbox[t]{4.5cm}{Contains R function of same name that trains an ensemble model using the cross validated predictions from all other models.} & none\\
 		\\
 		fit\_metrics.R & \parbox[t]{4.5cm}{Contains R function of same name that calculates performance metrics using cross validated predictions from all models.} & none\\
 		\\
-		var\_imp.R & \parbox[t]{4.5cm}{Contains R function of same name that calculates the variable importance of machine learning models.} & none\\
+		var\_imp.R & \parbox[t]{4.5cm}{Contains R function of same name that calculates the variable importance of machine-learning models.} & none\\
 		\\
-		partial\_dependence.R & \parbox[t]{4.5cm}{Contains R function of same name that calculates partial dependence of most important predictor variables for several machine learning models.} & none\\
+		partial\_dependence.R & \parbox[t]{4.5cm}{Contains R function of same name that calculates partial dependence of most important predictor variables for several machine-learning models.} & none\\
 		\\
 		monte\_carlo.R & \parbox[t]{4.5cm}{This was dropped from the analysis but described here only because earlier versions of the paper and data release had this component and we wanted to maintain a record of that.} & none\\
 \end{longtable}
@@ -80,7 +80,7 @@ The arrows should be interpreted as "output dependency flow". The steps should b
 
 ## Quick start
 
-Although all the scripts are sourced by the "main.R"" script, most of them need not be run to recreate a bulk of the important results. This is because several of the function, especially the ones that require hyperparameter tuning, are very computationally heavy and we have provided the output from those functions as a csv file. The quickest way to get started is by opening the "main.R" script and setting up the work environment. The code below can be copy and pasted or run directly from the "main.R" file. This includes installing pacakges and setting the working directory (note that the working directory is relative to where the files are stored, so a user needs to set their working directory after the files are downloaded).
+Although all the scripts are sourced by the "main.R"" script, most of them need not be run to recreate a bulk of the important results. This is because several of the functions, especially the ones that require hyperparameter tuning, are very computationally heavy and we have provided the output from those functions as a comma-separated value file. The quickest way to get started is by opening the "main.R" script and setting up the work environment. The code below can be copy and pasted or run directly from the "main.R" file. This includes installing packages and setting the working directory (note that the working directory is relative to where the files are stored, so a user needs to set their working directory after the files are downloaded).
 
 \vspace{8pt}
 
@@ -113,7 +113,7 @@ library(dplyr); library(PUBAD)
 setwd("~/set/working/directoy")
 ```
 
-The next step is to load the csv datafile and prepare the data as input for the functions. The only packages that are required for this step are `dplyr` and `PUBAD`. 
+The next step is to load the comma-separated value file and prepare the data as input for the functions. The only packages that are required for this step are `dplyr` and `PUBAD`. 
 
 \vspace{8pt}
 
@@ -142,7 +142,7 @@ model_data <- expVars$cleanBCs %>% # start with basin chars
   select(y, class,lat_gage:aspect_eastness) # reorder column positions
 ```
 
-The raw 7Q10s are divided by the drainage area of the basin and are log transformed prior to modelling. Because some of the 7Q10's are zero, a small, arbitrary constant of 0.001 was added to each 7Q10 value prior to taking the log transform. The data transformation for the baseline models is slightly different, and is explained in the "Description of train_bl_models" section below. After the data are loaded, the first step in the "main.R" is to find the optimal hyperparameters of for all of the models using random search, grid search, and bayesian optimization. This process will take over 12 hours for all of the models, so we provide the leave-one-out predicted values (output from "stack_models()" function) in the "all_preds.csv" file. You can go ahead and jump straight to the goodness of fit section in the "main.R" file starting at line 121. 
+The raw 7Q10 values are divided by the drainage area of the basin and are log transformed prior to modelling. Because some of the 7Q10 values are zero, a small, arbitrary constant of 0.001 was added to each 7Q10 value prior to log transformation. The data transformation for the baseline models is slightly different, and is explained in the "Description of train_bl_models" section below. After the data are loaded, the first step in the "main.R" is to find the optimal hyperparameters of all of the models using random search, grid search, and bayesian optimization. This process will take over 12 hours for all of the models, so we provide the leave-one-out predicted values (output from "stack_models()" function) in the "all_preds.csv" file. You can go ahead and jump straight to the goodness-of-fit section in the "main.R" file starting at line 121. 
 
 \vspace{8pt}
 
@@ -157,7 +157,7 @@ all_preds <- read.csv("data/all_preds.csv")
 model_error <- fit_metrics(all_preds,data_full)
 ```
 
-The final steps for this abbreviated version of the analysis is to calculate variable importance, partial dependence, and make some plots. 
+The final steps for this abbreviated version of the analysis are to calculate variable importance, partial dependence, and create some plots. 
 
 \vspace{8pt}
 
@@ -171,7 +171,7 @@ source("scripts/partial_dependence.R")
 pdp_data <- partial_dependence(model_data,var_imp_overall)
 ```
 
-Note that the variable importance and partial dependence don't actually require direct inputs from the other functions above. However, the model selections for the variable importance are based off pieces of the earlier analysis. The very last step is to create plots from the paper:
+Note that the variable importance and partial dependence don't actually require direct inputs from the other functions above. However, the model selections for the variable importance are based off pieces of the earlier analysis. The very last step is to create plots from Worland and others, in review:
 
 \vspace{8pt}
 
@@ -196,7 +196,7 @@ This section includes more information about determining the hyperparameters of 
 
 ### Description of train_ml_models()
 
-The process for the machine learning models is conceptually similar to the baseline models, but is much more computationally expensive. This basic pipeline involves (1) generating a bunch of points in hyperparameters and RMSE space to be used as substrate for a gaussian process model, and (2) use bayesian optimization to estimate the functional relationship between the hyperparameters and the RMSE. The gaussian process model attempts to discover a function that relates values of the hyperparameters to an output, in this case, the RMSE. Then an optimization function is used to seek for the combination of parameters where the function is maximized. Theoretically this should result in a set of optimal hyperparameters for a given model. Below is an example using a support vector machine (SVM) model. There are only two hyperparameters for a SVM model, the effect that the large residuals have on the regression is controlled by the \textit{cost (C)} and the standard deviation of the Gaussian kernel is controlled by \textit{sigma}. We don't know what values to select apriori, so we use the steps above. I have automated this process using a custom function that is a wrapper around both the `train` function from the caret package and the `BayesianOptimization` function from the rBayesianOptimization package.
+The process for the machine-learning models is conceptually similar to the baseline models, but is much more computationally expensive. This basic pipeline involves (1) generating points in hyperparameters and RMSE space to be used as substrate for a Gaussian process model, and (2) using bayesian optimization to estimate the functional relationship between the hyperparameters and the RMSE. The Gaussian process model attempts to discover a function that relates values of the hyperparameters to an output, in this case, the RMSE. Then an optimization function is used to find the combination of parameters where the function is maximized. Theoretically this should result in a set of optimal hyperparameters for a given model. Below is an example using a support vector machine (SVM). There are only two hyperparameters for a SVM model, the effect that the large residuals have on the regression is controlled by the \textit{cost (C)} and the standard deviation of the Gaussian kernel is controlled by \textit{sigma}. We don't know what values to select apriori, so we use the steps above. Thus process has been automated using a custom function that is a wrapper around both the `train` function from the caret package and the `BayesianOptimization` function from the rBayesianOptimization package.
 
 \vspace{8pt}
 
@@ -236,7 +236,7 @@ ggplot() +
   scale_color_viridis(guide=F)
 ```
 
-We can easily plot the parameter search for the SVM as it only has two parameters. The algorithm first seeds the search space with 10 random RMSE values resulting from different combinations of parameters. These are represented as the colored points below. The value is the negative RMSE in log space. We take the negation of the RMSE because the algorithm seeks to maximize the function. The line segments and the arrows represent the iterations of the Gaussian process model, with the color of the line indicating the resulting -RMSE for each iteration. 
+We can easily plot the parameter search for the SVM as it only has two parameters. The algorithm first seeds the search space with 10 random RMSE values resulting from different combinations of parameters. These are represented as the colored points below. The value is the negative RMSE in log space. We take the negative of the RMSE because the algorithm seeks to maximize the function. The line segments and the arrows represent the iterations of the Gaussian process model, with the color of the line indicating the resulting negative RMSE for each iteration. 
 
 \begin{figure}[ht]
 \begin{center}
@@ -248,7 +248,7 @@ We can easily plot the parameter search for the SVM as it only has two parameter
 
 ### Description of train_bl_models()
 
-We classified multivariate regression and geostatistical models as ``baseline'' methods. This classification scheme is used as a way to compare groups of models and does not reflect the complexity, accuracy, or robustness of the method. The models include two versions of censored regression, ordinary kriging, and a unit-area discharge null model. The first thing to note is that the response varaible is slightly different for the censored regression models. 
+We classified multivariate regression and geostatistical models as ``baseline'' methods. This classification scheme is used as a way to compare groups of models and does not reflect the complexity, accuracy, or robustness of the method. The models include two versions of censored regression, ordinary kriging, and a unit-area discharge null model. The first thing to note is that the response variable is slightly different for the censored regression models. 
 
 \vspace{8pt}
 
@@ -265,7 +265,7 @@ We classified multivariate regression and geostatistical models as ``baseline'' 
     select(y, class:aspect_eastness)
 ```
 
-If you compare this setup to the `model_data` setup above, you will notice that the response variable is slightly different. This is because the censored regression functions require a unique censoring value. In raw 7Q10 space, this is normally just zero. If we add a small constant to the 7Q10's and normalize them by their drainage basins, then there is no longer a unique censoring value (because the drainage basin areas are different). Therefore, we just take the natural log of the 7Q10 + 0.001 and censor as ln(0.001). 
+If you compare this setup to the `model_data` setup above, you will notice that the response variable is slightly different. This is because the censored regression functions require a unique censoring value. In raw 7Q10 space, this is normally just zero. If we add a small constant to the 7Q10 values and normalize them by their drainage basins, then there is no longer a unique censoring value (because the drainage basin areas are different). Therefore, we just take the natural log of the 7Q10 + 0.001 and censor as ln(0.001). 
 
 The only two models that require tuning are the two versions of the censored regression models. For example, the full censored regression model requires selecting a subset of predictors using best subset selection. It is impossible to know which predictors or the best selection algorithm to select apriori, so this is tuned using cross validation. The first step is to create a grid of possible values:
 
@@ -279,7 +279,7 @@ The only two models that require tuning are the two versions of the censored reg
 print(lcr_grid)
 ```
 
-and in this case, 10 different models are built inside a loo-cv framework and the RMSE is recorded for each model. The model with the lowest RMSE is selected as the final model. This process is referred to a "grid search". 
+In this case, 10 different models are built inside a LOO-CV framework, and the RMSE is recorded for each model. The model with the lowest RMSE is selected as the final model. This process is referred to as "grid search". 
 
 \vspace{8pt}
 
@@ -298,7 +298,7 @@ and in this case, 10 different models are built inside a loo-cv framework and th
   }
 ```
 
-A similar process is done for the region of influenced censored regression model, but with an additional "neighbors" hyperparameter.
+A similar process is done for the region of influence censored regression model, but with an additional "neighbors" hyperparameter.
 
 \vspace{8pt}
 
@@ -323,7 +323,7 @@ A similar process is done for the region of influenced censored regression model
   }
 ```
 
-## R package citations
+## R package and forthcoming paper citations
 
 ```{r, eval=F}
 pkg_list <- c("dplyr","reshape2","randomForest","kknn","caret",
@@ -335,56 +335,41 @@ pkg_list <- pkg_list[order(pkg_list)]
 sapply(pkg_list,function(x) print(citation(x)))
 ```
 
-- Christian Kleiber and Achim Zeileis (2008). Applied Econometrics with R. New York: Springer-Verlag. ISBN 978-0-387-77316-2. URL
-  https://CRAN.R-project.org/package=AER
+- Friedman, J., Hastie, T. and Tibshirani, R. 2010. Regularization Paths for Generalized Linear Models via Coordinate Descent. Journal of Statistical Software, 33(1), 1-22. http://www.jstatsoft.org/v33/i01/.
+  
+- Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E. 2015. Peeking Inside the Black Box: Visualizing Statistical Learning With Plots of Individual Conditional Expectation. Journal of Computational and Graphical Statistics, 24(1): 44-65.
 
-- Max Kuhn. Contributions from Jed Wing, Steve Weston, Andre Williams, Chris Keefer, Allan Engelhardt, Tony Cooper, Zachary Mayer, Brenton
-  Kenkel, the R Core Team, Michael Benesty, Reynald Lescarbeau, Andrew Ziem, Luca Scrucca, Yuan Tang, Can Candan and Tyler Hunt. (2017).
-  caret: Classification and Regression Training. R package version 6.0-76. https://CRAN.R-project.org/package=caret
+- Karatzoglou, A., Smola A., Hornik, K., Zeileis, A. 2004. kernlab - An S4 Package for Kernel Methods in R. Journal of Statistical Software 11(9), 1-20. http://www.jstatsoft.org/v11/i09/.
 
-- Max Kuhn, Steve Weston, Chris Keefer and Nathan Coulter. C code for Cubist by Ross Quinlan (2016). Cubist: Rule- And Instance-Based
-  Regression Modeling. R package version 0.0.19. https://CRAN.R-project.org/package=Cubist
-  
-- Hadley Wickham and Winston Chang (2017). devtools: Tools to Make Developing R Packages Easier. R package version 1.13.2.
-  https://CRAN.R-project.org/package=devtools
-  
-- Revolution Analytics and Steve Weston (2015). doMC: Foreach Parallel Adaptor for 'parallel'. R package version 1.3.4.
-  https://CRAN.R-project.org/package=doMC
-  
-- Hadley Wickham and Romain Francois (2016). dplyr: A Grammar of Data Manipulation. R package version 0.5.0.
-  https://CRAN.R-project.org/package=dplyr
-  
-- Greg Ridgeway with contributions from others (2017). gbm: Generalized Boosted Regression Models. R package version 2.1.3.
-  https://CRAN.R-project.org/package=gbm
-  
-- Paulo J. Ribeiro Jr and Peter J. Diggle (2016). geoR: Analysis of Geostatistical Data. R package version 1.7-5.2.
-  https://CRAN.R-project.org/package=geoR
-  
-- Jerome Friedman, Trevor Hastie, Robert Tibshirani (2010). Regularization Paths for Generalized Linear Models via Coordinate Descent.
-  Journal of Statistical Software, 33(1), 1-22. URL http://www.jstatsoft.org/v33/i01/.
-  
-- Noah Simon, Jerome Friedman, Trevor Hastie, Rob Tibshirani (2011). Regularization Paths for Cox's Proportional Hazards Model via
-  Coordinate Descent. Journal of Statistical Software, 39(5), 1-13. URL http://www.jstatsoft.org/v39/i05/.
-  
-- Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E., Peeking Inside the Black Box: Visualizing Statistical Learning With Plots of
-  Individual Conditional Expectation. (2015) Journal of Computational and Graphical Statistics, 24(1): 44-65
-  
-- Alexandros Karatzoglou, Alex Smola, Kurt Hornik, Achim Zeileis (2004). kernlab - An S4 Package for Kernel Methods in R. Journal of
-  Statistical Software 11(9), 1-20. URL http://www.jstatsoft.org/v11/i09/
-  
-- Klaus Schliep and Klaus Hechenbichler (2016). kknn: Weighted k-Nearest Neighbors. R package version 1.3.1.
-  https://CRAN.R-project.org/package=kknn
-  
-- Thomas Lumley based on Fortran code by Alan Miller (2017). leaps: Regression Subset Selection. R package version 3.0.
-  https://CRAN.R-project.org/package=leaps
-  
-- A. Liaw and M. Wiener (2002). Classification and Regression by randomForest. R News 2(3), 18--22.
+- Kleiber, C. and Zeileis, A., 2008. Applied Econometrics with R. New York: Springer-Verlag, ISBN 978-0-387-77316-2. https://CRAN.R-project.org/package=AER.
 
-- Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL
-  http://www.jstatsoft.org/v21/i12/.
-  
-- Lorenz, D.L., in preparation smwrQW--An R Package for Managing and Analyzing Water-Quality Data, Version 0.7.9:
+- Kuhn, M. 2017. caret: Classification and Regression Training. R package version 6.0-76. https://CRAN.R-project.org/package=caret.
 
-- Lorenz, D.L., in preparation, smwrStats--An R package for the analysis of hydrologic data, Version 0.7.5: U.S. Geological Survey Open
-  File Report
+- Kuhn, M., Weston, S., Keefer C. and Coulter, N. 2016. Cubist: Rule- And Instance-Based Regression Modeling. R package version 0.0.19. https://CRAN.R-project.org/package=Cubist.
+
+- Liaw, A., and Wiener, M. 2002. Classification and Regression by randomForest. R News 2(3), 18--22.
+  
+- Lorenz, D.L. 2017. in preparation smwrQW--An R Package for Managing and Analyzing Water-Quality Data, Version 0.7.9.
+
+- Lorenz, D.L. 2017. in preparation, smwrStats--An R package for the analysis of hydrologic data, Version 0.7.5.
+
+- Lumley, T. 2017. leaps: Regression Subset Selection. R package version 3.0. https://CRAN.R-project.org/package=leaps.
+
+- Ribeiro, P.J. and Diggle, P.J. 2016. geoR: Analysis of Geostatistical Data. R package version 1.7-5.2. https://CRAN.R-project.org/package=geoR.
+
+- Ridgeway, G. 2017. gbm: Generalized Boosted Regression Models. R package version 2.1.3. https://CRAN.R-project.org/package=gbm.
+  
+- Schliep, K. and Hechenbichler, K. 2016. kknn: Weighted k-Nearest Neighbors. R package version 1.3.1. https://CRAN.R-project.org/package=kknn.
+
+- Simon, N., Friedman, J., Hastie, T., and Tibshirani, R. 2011. Regularization Paths for Cox's Proportional Hazards Model via Coordinate Descent. Journal of Statistical Software, 39(5), 1-13. http://www.jstatsoft.org/v39/i05/.
+
+- Weston, S. and Revolution Analytics. 2015. doMC: Foreach Parallel Adaptor for 'parallel'. R package version 1.3.4. https://CRAN.R-project.org/package=doMC.
+  
+- Wickham, H. and Chang W. 2017. devtools: Tools to Make Developing R Packages Easier. R package version 1.13.2. https://CRAN.R-project.org/package=devtools.
+
+- Wickham, H, and Francois, R. 2016. dplyr: A Grammar of Data Manipulation. R package version 0.5.0. https://CRAN.R-project.org/package=dplyr.
+
+- Wickham, H. 2007. Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. http://www.jstatsoft.org/v21/i12/.
+  
+- Worland, S.C., Farmer, W.H, and Kiang, J. 2017. "Improving predictions of hydrological lowflow indices in ungaged basins using machine learning". U.S. Geological Survey. Under review.
 
