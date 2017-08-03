@@ -19,21 +19,27 @@ scrape_flow_stats <- function(station_ids,statistic) {
     station <- station_ids[i]
     url <- paste0("https://streamstatsags.cr.usgs.gov/gagepages/html/0",station,".htm")
     
-    hold <- url %>%
-      read_html() %>%
-      html_nodes(xpath='/html/body/table[3]') %>%
-      html_table() %>%
-      as.data.frame() 
+    print(i)
+    print(station)
+    
+    tryCatch(
+      hold <- url %>%
+        read_html() %>%
+        html_nodes(xpath='/html/body/table[3]') %>%
+        html_table() %>%
+        as.data.frame(),
+      error = function(e){NA} 
+    )
     
     values[i] <- filter(hold, X1 == statistic)[1,2]
   }
-  
+
   values <- as.numeric(values)
   results <- data.frame(station_ids=station_ids,stat=values)
   return(results)
 }
 
-# exmaple
+# example
 # station_ids = c(7048600,7049000,7050500,7053250,7055875,7056000)
 # statistic = "7_Day_10_Year_Low_Flow"
 # 
