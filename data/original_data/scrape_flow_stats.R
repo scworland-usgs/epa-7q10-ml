@@ -40,7 +40,7 @@ scrape_flow_stats <- function(station_ids,statistic) {
 }
 
 # example
-# station_ids = c(7048600,7049000,7050500,7053250,7055875,7056000)
-# statistic = "7_Day_10_Year_Low_Flow"
+# station_ids <- c(7048600,7049000,7050500,7053250,7055875,7056000)
+# statistic <- "7_Day_10_Year_Low_Flow"
 # 
-# data = scrape_flow_stats(station_ids,statistic)
+# data <- scrape_flow_stats(station_ids,statistic)
