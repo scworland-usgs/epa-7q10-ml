@@ -10,7 +10,7 @@ scrape_flow_stats <- function(station_ids,statistic) {
   }
   
   if(!require(stringr)){             
-    install.packages("dplyr")      
+    install.packages("stringr")      
   }
   
   library(rvest) 
@@ -24,7 +24,7 @@ scrape_flow_stats <- function(station_ids,statistic) {
       station <- station_ids[i]
       url <- paste0("https://streamstatsags.cr.usgs.gov/gagepages/html/",station,".htm")
       
-      print(paste0((i/N)*100,"%"," complete"))
+      print(paste0(round((i/N)*100,2),"%"," complete"))
       
       tryCatch(
         hold <- url %>%
@@ -44,7 +44,7 @@ scrape_flow_stats <- function(station_ids,statistic) {
       station <- station_ids[i]
       url <- paste0("https://streamstatsags.cr.usgs.gov/gagepages/html/0",station,".htm")
       
-      print(paste0((i/N)*100,"%"," complete"))
+      print(paste0(round((i/N)*100,2),"%"," complete"))
       
       tryCatch(
         hold <- url %>%
